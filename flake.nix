@@ -41,6 +41,10 @@
       url = "github:nix-community/nix4nvchad";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    claude-code-nix = {
+      url = "github:sadjow/claude-code-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -55,15 +59,15 @@
         # User configuration
         username = "fluoride"; # automatically set with install.sh and live-install.sh
         editor = "nixvim"; # nixvim, vscode, helix, nvchad, neovim, emacs (WIP)
-        browser = "zen"; # firefox, floorp, zen
+        browser = "firefox"; # firefox, floorp, zen
         terminal = "kitty"; # kitty, alacritty, wezterm
         terminalFileManager = "yazi"; # yazi or lf
         sddmTheme = "purple_leaves"; # astronaut, black_hole, purple_leaves, jake_the_dog, hyprland_kath
         wallpaper = "kurzgesagt"; # see modules/themes/wallpapers
 
         # System configuration
-        videoDriver = "nvidia"; # CHOOSE YOUR GPU DRIVERS (nvidia, amdgpu or intel)
-        hostname = "NixOS"; # CHOOSE A HOSTNAME HERE
+        videoDriver = "intel"; # CHOOSE YOUR GPU DRIVERS (nvidia, amdgpu or intel)
+        hostname = "carbon"; # CHOOSE A HOSTNAME HERE
         locale = "en_GB.UTF-8"; # CHOOSE YOUR LOCALE
         timezone = "Europe/London"; # CHOOSE YOUR TIMEZONE
         kbdLayout = "gb"; # CHOOSE YOUR KEYBOARD LAYOUT
@@ -73,7 +77,6 @@
 
       systems = [
         "x86_64-linux"
-        "aarch64-linux"
       ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
     in
@@ -82,7 +85,7 @@
       overlays = import ./overlays { inherit inputs settings; };
       formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
       nixosConfigurations = {
-        Default = nixpkgs.lib.nixosSystem {
+        carbon = nixpkgs.lib.nixosSystem {
           system = forAllSystems (system: system);
           modules = [ ./hosts/Default/configuration.nix ];
           specialArgs = {

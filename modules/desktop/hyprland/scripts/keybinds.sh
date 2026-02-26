@@ -35,30 +35,22 @@ yad \
   --column=Description: \
   --column=Command: \
   --timeout-indicator=bottom \
-  "SUPER Return" "Launch terminal" "$_terminal" \
   "SUPER T" "Launch terminal" "$_terminal" \
   "SUPER E" "Launch file manager" "$_terminal_FM" \
+  "SUPER C" "Launch text editor" "$editor" \
   "SUPER F" "Launch browser" "$_browser" \
   "SUPER SHIFT S" "Launch spotify" "spotify" \
   "CTRL ALT Delete" "Open system monitor" "$_terminal -e 'btop'" \
-  "SUPER A" "Launch application menu" "scripts/launcher drun" \
+  "SUPER CTRL C" "Open colour picker" "hyprpicker" \
   "SUPER SPACE" "Launch application menu" "scripts/launcher drun" \
-  "SUPER SHIFT T" "Launch tmux sessions" "scripts/launcher tmux" \
-  "SUPER G" "Game launcher" "scripts/launcher games" \
   "SUPER F9" "Enable night mode" "hyprsunset --temperature 2500" \
   "SUPER F10" "Disable night mode" "pkill hyprsunset" \
-  "SUPER F8" "Toggle autoclicker" "scripts/autoclicker.nix" \
-  "SUPER CTRL C" "Colour picker" "hyprpicker --autocopy" \
   "SUPER, Left Click" "Move window with mouse" "movewindow" \
   "SUPER, Right Click" "Resize window with mouse" "resizewindow" \
-  "SUPER SHIFT →" "Resize window right" "resizeactive 30 0" \
-  "SUPER SHIFT ←" "Resize window left" "resizeactive -30 0" \
-  "SUPER SHIFT ↑" "Resize window up" "resizeactive 0 -30" \
-  "SUPER SHIFT ↓" "Resize window down" "resizeactive 0 30" \
-  "SUPER SHIFT L" "Resize window right (HJKL)" "resizeactive 30 0" \
-  "SUPER SHIFT H" "Resize window left (HJKL)" "resizeactive -30 0" \
-  "SUPER SHIFT K" "Resize window up (HJKL)" "resizeactive 0 -30" \
-  "SUPER SHIFT J" "Resize window down (HJKL)" "resizeactive 0 30" \
+  "SUPER SHIFT →/L" "Resize window right" "resizeactive 30 0" \
+  "SUPER SHIFT ←/H" "Resize window left" "resizeactive -30 0" \
+  "SUPER SHIFT ↑/K" "Resize window up" "resizeactive 0 -30" \
+  "SUPER SHIFT ↓/J" "Resize window down" "resizeactive 0 30" \
   "XF86MonBrightnessDown" "Decrease brightness" "brightnessctl set 2%-" \
   "XF86MonBrightnessUp" "Increase brightness" "brightnessctl set +2%" \
   "XF86AudioLowerVolume" "Lower volume" "pamixer -d 2" \
@@ -68,23 +60,17 @@ yad \
   "XF86AudioPlay" "Play/Pause media" "playerctl play-pause" \
   "XF86AudioNext" "Next media track" "playerctl next" \
   "XF86AudioPrev" "Previous media track" "playerctl previous" \
-  "SUPER Delete" "Exit Hyprland session" "exit" \
   "SUPER W" "Toggle floating window" "togglefloating" \
   "SUPER SHIFT G" "Toggle window group" "togglegroup" \
   "ALT Return" "Toggle fullscreen" "fullscreen" \
-  "SUPER ALT L" "Lock screen" "hyprlock" \
   "SUPER Backspace" "Power menu" "wlogout -b 4" \
   "CTRL Escape" "Toggle Waybar" "pkill waybar || waybar" \
-  "SUPER SHIFT N" "Open notification panel" "swaync-client -t -sw" \
   "SUPER SHIFT Q" "Open notification panel" "swaync-client -t -sw" \
-  "SUPER Q" "Close active window" "scripts/dontkillsteam.sh" \
-  "ALT F4" "Close active window" "scripts/dontkillsteam.sh" \
+  "SUPER Q" "Close active window" "killactive" \
   "SUPER Z" "Launch emoji picker" "scripts/launcher emoji" \
   "SUPER ALT K" "Change keyboard layout" "scripts/keyboardswitch.sh" \
   "SUPER U" "Rebuild system" "$_terminal -e scripts/rebuild.sh" \
-  "SUPER ALT G" "Enable game mode" "scripts/gamemode.sh" \
   "SUPER V" "Clipboard manager" "scripts/ClipManager.sh" \
-  "SUPER M" "Online music" "scripts/rofimusic.sh" \
   "SUPER P" "Screenshot (select area)" "scripts/screenshot.sh s" \
   "SUPER CTRL P" "Screenshot (frozen screen)" "scripts/screenshot.sh sf" \
   "SUPER Print" "Screenshot (current monitor)" "scripts/screenshot.sh m" \
@@ -96,7 +82,6 @@ yad \
   "SUPER CTRL S" "Move to scratchpad" "movetoworkspacesilent special" \
   "SUPER S" "Toggle scratchpad workspace" "togglespecialworkspace" \
   "SUPER Tab" "Cycle next window" "cyclenext" \
-  "SUPER Tab" "Bring active window to top" "bringactivetotop" \
   "SUPER CTRL →" "Switch to next workspace" "workspace r+1" \
   "SUPER CTRL ←" "Switch to previous workspace" "workspace r-1" \
   "SUPER CTRL ↓" "Go to first empty workspace" "workspace empty" \
@@ -107,4 +92,4 @@ yad \
   "ALT Tab" "Move focus down" "movefocus d" \
   "SUPER 1-0" "Switch to workspace 1-10" "workspace 1-10" \
   "SUPER SHIFT 1-0" "Move to workspace 1-10" "movetoworkspace 1-10" \
-  "SUPER SHIFT 1-0" "Silently move to workspace 1-10" "movetoworkspacesilent 1-10" \
+  "SUPER CTRL 1-0" "Silently move to workspace 1-10" "movetoworkspacesilent 1-10" \

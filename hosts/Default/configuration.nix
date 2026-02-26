@@ -21,7 +21,7 @@
     ../../modules/desktop/hyprland # Enable hyprland window manager
     # ../../modules/desktop/i3-gaps # Enable i3 window manager
 
-    ../../modules/programs/games
+    # ../../modules/programs/games
     ../../modules/programs/browser/${browser} # Set browser defined in flake.nix
     ../../modules/programs/terminal/${terminal} # Set terminal defined in flake.nix
     ../../modules/programs/editor/${editor} # Set editor defined in flake.nix
@@ -34,12 +34,12 @@
     ../../modules/programs/cli/btop
     ../../modules/programs/shell/bash
     ../../modules/programs/shell/zsh
-    ../../modules/programs/media/discord
-    ../../modules/programs/media/spicetify
+    # ../../modules/programs/media/discord
+    # ../../modules/programs/media/spicetify
     # ../../modules/programs/media/youtube-music
     # ../../modules/programs/media/thunderbird
     # ../../modules/programs/media/obs-studio
-    ../../modules/programs/media/mpv
+    # ../../modules/programs/media/mpv
     ../../modules/programs/misc/tlp
     ../../modules/programs/misc/thunar
     ../../modules/programs/misc/lact # GPU fan, clock and power configuration
@@ -51,18 +51,40 @@
   home-manager.sharedModules = [
     (_: {
       home.packages = with pkgs; [
-        obsidian
-        protonvpn-gui # VPN
-        github-desktop
-        # pokego # Overlayed
-        # krita
-        # gimp
+        # obsidian
+        # github-desktop
       ];
     })
   ];
 
   # Define system packages here
   environment.systemPackages = with pkgs; [
+    vim
+    wget
+    waybar
+    wofi
+    wl-clipboard
+    grim slurp
+    swaynotificationcenter
+    git
+    signal-desktop
+    jetbrains.rust-rover
+    spotify
+    jetbrains.pycharm-community-src
+    mullvad-vpn
+    zotero
+    # obsidian
+    # taskwarrior
+    # gcalcli
+    python3
+    curl
+    git
+    spawn_fcgi
+
+    # familiar sensors
+    ffmpeg        # webcam capture
+    sox           # audio (play notification sounds)
+    libnotify     # desktop notifications
   ];
 
   networking.hostName = hostname; # Set hostname defined in flake.nix
@@ -75,27 +97,43 @@
     dataDir = "/home/${username}"; # default location for new folders
     configDir = "/home/${username}/.config/syncthing";
   };
-  /*
-    services.minidlna = {
-      enable = true;
-      openFirewall = true;
-      settings = {
-        friendly_name = "NixOS-DLNA";
-        media_dir = [
-          # A = Audio, P = Pictures, V, = Videos, PV = Pictures and Videos.
-          # "A,/mnt/work/Pimsleur/Russian"
-          "/mnt/work/Pimsleur"
-          "/mnt/work/Media/Films"
-          "/mnt/work/Media/Series"
-          "/mnt/work/Media/Videos"
-          "/mnt/work/Media/Music"
-        ];
-        inotify = "yes";
-        log_level = "error";
+
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "client";
+
+};
+
+  networking.nameservers = [ "1.1.1.1" "8.8.8.8" "8.8.4.4" ];
+
+  # Dashboard web server
+  services.nginx = {
+    enable = true;
+    virtualHosts."_" = {
+      root = "/var/www/dashboard";  # CHANGE THIS!
+      locations = {
+        "/" = {
+          index = "index.html";
+        };
+        "/api/" = {
+          proxyPass = "http://127.0.0.1:8080";
+        };
       };
     };
-    users.users.minidlna = {
-      extraGroups = ["users"]; # so minidlna can access the files.
+  };
+
+  # Dashboard API service
+  systemd.services.dashboard-api = {
+    description = "Dashboard API";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network.target" ];
+    serviceConfig = {
+      ExecStart = "/home/fluoride/bin/dashboard-server";
+      Restart = "always";
+      User = "fluoride";
     };
-  */
+  };
+
+  # Firewall
+  networking.firewall.allowedTCPPorts = [ 80 ];
 }

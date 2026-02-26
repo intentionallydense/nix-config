@@ -92,7 +92,7 @@
             settings = {
               "$mainMod" = "SUPER";
               "$term" = "${getExe pkgs.${terminal}}";
-              "$editor" = "code --disable-gpu";
+              "$editor" = "${getExe pkgs.neovim}";
               "$fileManager" = "$term --class \"terminalFileManager\" -e ${terminalFileManager}";
               "$browser" = browser;
 
@@ -267,11 +267,7 @@
                 "opacity 0.90 0.90,class:^(gcr-prompter)$" # keyring prompt
                 "opacity 0.90 0.90,title:^(Hyprland Polkit Agent)$" # polkit prompt
                 "opacity 1.00 1.00,class:^(firefox)$"
-                "opacity 0.90 0.90,class:^(Brave-browser)$"
                 "opacity 0.80 0.80,class:^(org.gnome.Nautilus|thunar)$"
-                "opacity 0.80 0.80,class:^(Steam)$"
-                "opacity 0.80 0.80,class:^(steam)$"
-                "opacity 0.80 0.80,class:^(steamwebhelper)$"
                 "opacity 0.80 0.80,class:^(Spotify)$"
                 "opacity 0.80 0.80,title:(.*)(Spotify)(.*)$"
                 "opacity 0.80 0.80,class:^(VSCodium)$"
@@ -305,21 +301,6 @@
                 "opacity 0.80 0.70,class:^(nm-applet)$"
                 "opacity 0.80 0.70,class:^(nm-connection-editor)$"
                 "opacity 0.80 0.70,class:^(org.kde.polkit-kde-authentication-agent-1)$"
-
-                "content game, tag:games"
-                "tag +games, content:game"
-                "tag +games, class:^(steam_app.*|steam_app_\d+)$"
-                "tag +games, class:^(gamescope)$"
-                "tag +games, class:(Waydroid)"
-                "tag +games, class:(osu!)"
-
-                # Games
-                "syncfullscreen,tag:games"
-                "fullscreen,tag:games"
-                "noborder 1,tag:games"
-                "noshadow,tag:games"
-                "noblur,tag:games"
-                "noanim,tag:games"
 
                 "float,class:^(qt5ct)$"
                 "float,class:^(nwg-look)$"
@@ -365,56 +346,41 @@
                   # Keybinds help menu
                   "$mainMod, question, exec, ${./scripts/keybinds.sh}"
                   "$mainMod, slash, exec, ${./scripts/keybinds.sh}"
-                  "$mainMod CTRL, K, exec, ${./scripts/keybinds.sh}"
-
-                  "$mainMod, F8, exec, kill $(cat /tmp/auto-clicker.pid) 2>/dev/null || ${lib.getExe autoclicker} --cps 40"
-                  # "$mainMod ALT, mouse:276, exec, kill $(cat /tmp/auto-clicker.pid) 2>/dev/null || ${lib.getExe autoclicker} --cps 60"
 
                   # Night Mode (lower value means warmer temp)
                   "$mainMod, F9, exec, ${getExe pkgs.hyprsunset} --temperature 3500" # good values: 3500, 3000, 2500
                   "$mainMod, F10, exec, pkill hyprsunset"
 
                   # Window/Session actions
-                  "$mainMod, Q, exec, ${./scripts/dontkillsteam.sh}" # killactive, kill the window on focus
-                  "ALT, F4, exec, ${./scripts/dontkillsteam.sh}" # killactive, kill the window on focus
-                  "$mainMod, delete, exit" # kill hyperland session
+                  "$mainMod, Q, killactive" # kill the window on focus
                   "$mainMod, W, togglefloating" # toggle the window on focus to float
                   "$mainMod SHIFT, G, togglegroup" # toggle the window on focus to float
                   "ALT, return, fullscreen" # toggle the window on focus to fullscreen
-                  "$mainMod ALT, L, exec, hyprlock" # lock screen
                   "$mainMod, backspace, exec, pkill -x wlogout || wlogout -b 4" # logout menu
                   "$CONTROL, ESCAPE, exec, pkill waybar || waybar" # toggle waybar
 
                   # Applications/Programs
-                  "$mainMod, Return, exec, $term"
                   "$mainMod, T, exec, $term"
                   "$mainMod, E, exec, $fileManager"
                   "$mainMod, C, exec, $editor"
                   "$mainMod, F, exec, $browser"
                   "$mainMod SHIFT, S, exec, spotify"
-                  "$mainMod SHIFT, Y, exec, youtube-music"
                   "$CONTROL ALT, DELETE, exec, $term -e '${getExe pkgs.btop}'" # System Monitor
                   "$mainMod CTRL, C, exec, hyprpicker --autocopy --format=hex" # Colour Picker
 
-                  "$mainMod, A, exec, launcher drun" # launch desktop applications
                   "$mainMod, SPACE, exec, launcher drun" # launch desktop applications
                   "$mainMod, Z, exec, launcher emoji" # launch emoji picker
-                  "$mainMod SHIFT, T, exec, launcher tmux" # launch tmux sessions
-                  "$mainMod, G, exec, launcher games" # game launcher
-                  # "$mainMod, tab, exec, launcher window" # switch between desktop applications
-                  # "$mainMod, R, exec, launcher file" # brrwse system files
+                   # "$mainMod SHIFT, T, exec, launcher tmux" # launch tmux sessions
+                  "$mainMod, tab, exec, launcher window" # switch between desktop applications
+                  "$mainMod, R, exec, launcher file" # brrwse system files
                   "$mainMod ALT, K, exec, ${./scripts/keyboardswitch.sh}" # change keyboard layout
-                  "$mainMod SHIFT, N, exec, swaync-client -t -sw" # swayNC panel
                   "$mainMod SHIFT, Q, exec, swaync-client -t -sw" # swayNC panel
-                  "$mainMod ALT, G, exec, ${./scripts/gamemode.sh}" # disable hypr effects for gamemode
-                  "$mainMod, V, exec, ${./scripts/ClipManager.sh}" # Clipboard Manager
-                  "$mainMod, M, exec, ${./scripts/rofimusic.sh}" # online music
+                  "$mainMod, V, exec, ${./scripts/smart-clipboard.sh}" # Smart paste (direct in terminal, GUI elsewhere)
+                  "$mainMod SHIFT, V, exec, ${./scripts/ClipManager.sh}" # Clipboard history GUI
 
                   # Screenshot/Screencapture
                   "$mainMod, P, exec, ${./scripts/screenshot.sh} s" # drag to snip an area / click on a window to print it
                   "$mainMod CTRL, P, exec, ${./scripts/screenshot.sh} sf" # frozen screen, drag to snip an area / click on a window to print it
-                  "$mainMod, print, exec, ${./scripts/screenshot.sh} m" # print focused monitor
-                  "$mainMod ALT, P, exec, ${./scripts/screenshot.sh} p" # print all monitor outputs
 
                   # Functional keybinds
                   ",xf86Sleep, exec, systemctl suspend" # Put computer into sleep mode
@@ -446,21 +412,12 @@
                   "$mainMod, right, movefocus, r"
                   "$mainMod, up, movefocus, u"
                   "$mainMod, down, movefocus, d"
-                  "ALT, Tab, movefocus, d"
 
                   # Move focus with mainMod + HJKL keys
                   "$mainMod, h, movefocus, l"
                   "$mainMod, l, movefocus, r"
                   "$mainMod, k, movefocus, u"
                   "$mainMod, j, movefocus, d"
-
-                  # Go to workspace 6 and 7 with mouse side buttons
-                  "$mainMod, mouse:276, workspace, 5"
-                  "$mainMod, mouse:275, workspace, 6"
-                  "$mainMod SHIFT, mouse:276, movetoworkspace, 5"
-                  "$mainMod SHIFT, mouse:275, movetoworkspace, 6"
-                  "$mainMod CTRL, mouse:276, movetoworkspacesilent, 5"
-                  "$mainMod CTRL, mouse:275, movetoworkspacesilent, 6"
 
                   # Rebuild NixOS with a KeyBind
                   "$mainMod, U, exec, $term -e ${./scripts/rebuild.sh}"
@@ -522,23 +479,6 @@
 
               # Easily plug in any monitor
               monitor=,preferred,auto,1
-
-              # 1080p-HDR monitor on the left, 4K-HDR monitor in the middle and 1080p vertical monitor on the right.
-              monitor=desc:BNQ BenQ EW277HDR 99J01861SL0,preferred,-1920x0,1
-              monitor=desc:BNQ BenQ EL2870U PCK00489SL0,preferred,0x0,2
-              monitor=desc:BNQ BenQ xl2420t 99D06760SL0,preferred,1920x-420,1,transform,1 # 5 for fipped
-
-              # Binds workspaces to my monitors only (find desc with: hyprctl monitors)
-              workspace=1,monitor:desc:BNQ BenQ EL2870U PCK00489SL0,default:true
-              workspace=2,monitor:desc:BNQ BenQ EL2870U PCK00489SL0
-              workspace=3,monitor:desc:BNQ BenQ EL2870U PCK00489SL0
-              workspace=4,monitor:desc:BNQ BenQ EL2870U PCK00489SL0
-              workspace=5,monitor:desc:BNQ BenQ EW277HDR 99J01861SL0,default:true
-              workspace=6,monitor:desc:BNQ BenQ EW277HDR 99J01861SL0
-              workspace=7,monitor:desc:BNQ BenQ EW277HDR 99J01861SL0
-              workspace=8,monitor:desc:BNQ BenQ xl2420t 99D06760SL0,default:true
-              workspace=9,monitor:desc:BNQ BenQ xl2420t 99D06760SL0
-              workspace=10,monitor:desc:BNQ BenQ EL2870U PCK00489SL0
             '';
           };
         }
