@@ -43,7 +43,7 @@
     ../../modules/programs/misc/tlp
     ../../modules/programs/misc/thunar
     ../../modules/programs/misc/lact # GPU fan, clock and power configuration
-    # ../../modules/programs/misc/nix-ld
+    ../../modules/programs/misc/nix-ld
     # ../../modules/programs/misc/virt-manager
   ];
 
@@ -70,7 +70,7 @@
     signal-desktop
     jetbrains.rust-rover
     spotify
-    jetbrains.pycharm-community-src
+    jetbrains.pycharm-oss
     mullvad-vpn
     zotero
     # obsidian
@@ -101,39 +101,10 @@
   services.tailscale = {
     enable = true;
     useRoutingFeatures = "client";
+  };
 
-};
+  networking.firewall.trustedInterfaces = [ "tailscale0" ];
 
   networking.nameservers = [ "1.1.1.1" "8.8.8.8" "8.8.4.4" ];
 
-  # Dashboard web server
-  services.nginx = {
-    enable = true;
-    virtualHosts."_" = {
-      root = "/var/www/dashboard";  # CHANGE THIS!
-      locations = {
-        "/" = {
-          index = "index.html";
-        };
-        "/api/" = {
-          proxyPass = "http://127.0.0.1:8080";
-        };
-      };
-    };
-  };
-
-  # Dashboard API service
-  systemd.services.dashboard-api = {
-    description = "Dashboard API";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "network.target" ];
-    serviceConfig = {
-      ExecStart = "/home/fluoride/bin/dashboard-server";
-      Restart = "always";
-      User = "fluoride";
-    };
-  };
-
-  # Firewall
-  networking.firewall.allowedTCPPorts = [ 80 ];
 }

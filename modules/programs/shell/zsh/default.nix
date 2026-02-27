@@ -42,6 +42,9 @@
             source ${pkgs.zsh-powerlevel10k}/share/zsh-powerlevel10k/powerlevel10k.zsh-theme
             test -f ~/.config/zsh/.p10k.zsh && source ~/.config/zsh/.p10k.zsh
 
+            # Conda
+            [ -f /home/fluoride/miniconda3/etc/profile.d/conda.sh ] && source /home/fluoride/miniconda3/etc/profile.d/conda.sh
+
             # Direnv hook
             eval "$(direnv hook zsh)"
 
@@ -128,6 +131,9 @@
             }
           '';
           envExtra = ''
+            # Local binaries (for native Claude Code, etc.)
+            export PATH="$HOME/.local/bin:$PATH"
+
             # Defaults
             export XMONAD_CONFIG_DIR="''${XDG_CONFIG_HOME:-$HOME/.config}/xmonad" # xmonad.hs is expected to stay here
             export XMONAD_DATA_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/xmonad"

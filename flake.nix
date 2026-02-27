@@ -86,7 +86,7 @@
       formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
       nixosConfigurations = {
         carbon = nixpkgs.lib.nixosSystem {
-          system = forAllSystems (system: system);
+          system = "x86_64-linux";
           modules = [ ./hosts/Default/configuration.nix ];
           specialArgs = {
             inherit self inputs outputs;
