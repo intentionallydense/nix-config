@@ -105,6 +105,30 @@
 
   networking.firewall.trustedInterfaces = [ "tailscale0" ];
 
+  # Claude wrapper web UI — starts on boot, reachable over Tailscale
+  systemd.services.claude-wrapper = let
+    python = pkgs.python313.withPackages (ps: with ps; [
+      anthropic fastapi uvicorn python-dotenv pydantic
+      websockets feedparser python-multipart pymupdf setuptools
+    ]);
+  in {
+    description = "Claude Wrapper web UI";
+    after = [ "network.target" "tailscaled.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "simple";
+      User = username;
+      WorkingDirectory = "/home/${username}/claude-wrapper/claudepilled";
+      ExecStart = "${python}/bin/python -m claude_wrapper.server";
+      Restart = "on-failure";
+      RestartSec = 5;
+      Environment = "PYTHONPATH=/home/${username}/claude-wrapper/claudepilled";
+    };
+  };
+
+  # SSH (only reachable over Tailscale via trustedInterfaces above)
+  services.openssh.enable = true;
+
   networking.nameservers = [ "1.1.1.1" "8.8.8.8" "8.8.4.4" ];
 
 }
