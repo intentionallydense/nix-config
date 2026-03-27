@@ -1,0 +1,19 @@
+# sops-nix configuration.
+# Secrets are encrypted with an age key derived from the SSH ed25519 key.
+#
+# Setup:
+#   1. Derive your age public key:
+#      ssh-to-age < ~/.ssh/id_ed25519.pub
+#   2. Replace the placeholder below with the output.
+#   3. Create the age private key for decryption:
+#      mkdir -p ~/.config/sops/age
+#      ssh-to-age -private-key -i ~/.ssh/id_ed25519 > ~/.config/sops/age/keys.txt
+#   4. Create a secret file:
+#      sops secrets/secrets.yaml
+keys:
+  - &anthonyhan_salvia age1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  # TODO: replace with ssh-to-age output
+creation_rules:
+  - path_regex: secrets/.*\.yaml$
+    key_groups:
+      - age:
+          - *anthonyhan_salvia
