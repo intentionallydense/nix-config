@@ -226,7 +226,7 @@
               misc = {
                 disable_hyprland_logo = true;
                 mouse_move_focuses_monitor = true;
-                swallow_regex = "^(Alacritty|kitty)$";
+                swallow_regex = "^(Alacritty|kitty|com\\.mitchellh\\.ghostty)$";
                 enable_swallow = true;
                 vfr = true; # always keep on
                 vrr = 2; # enable variable refresh rate (0=off, 1=on, 2=fullscreen only, 3 = fullscreen games/media)
@@ -248,7 +248,7 @@
                 "tile on, match:title (.*)(Godot)(.*)$"
 
                 # Opacity (active inactive)
-                "opacity 0.80 0.80, match:class ^(kitty|alacritty|Alacritty|org.wezfurlong.wezterm)$"
+                "opacity 0.80 0.80, match:class ^(kitty|alacritty|Alacritty|org.wezfurlong.wezterm|com\\.mitchellh\\.ghostty)$"
                 "opacity 0.80 0.80, match:class ^(nvim-wrapper)$"
                 "opacity 0.90 0.90, match:class ^(gcr-prompter)$" # keyring prompt
                 "opacity 0.90 0.90, match:title ^(Hyprland Polkit Agent)$" # polkit prompt
@@ -341,7 +341,7 @@
                   "$mainMod, Q, killactive" # kill the window on focus
                   "$mainMod, W, togglefloating" # toggle the window on focus to float
                   "$mainMod SHIFT, G, togglegroup" # toggle the window on focus to float
-                  "ALT, return, fullscreen" # toggle the window on focus to fullscreen
+                  "$mainMod, enter, fullscreen" # toggle the window on focus to fullscreen
                   "$mainMod, backspace, exec, pkill -x wlogout || wlogout -b 4" # logout menu
                   "$CONTROL, ESCAPE, exec, pkill waybar || waybar" # toggle waybar
 

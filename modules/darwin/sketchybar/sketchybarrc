@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+# SketchyBar config — AeroSpace workspace indicators + clock.
+# Catppuccin Mocha palette throughout.
+
+# -- Catppuccin Mocha --
+BAR_COLOR=0xee1e1e2e       # Base (semi-transparent)
+ACTIVE_BG=0xffcba6f7       # Mauve
+ACTIVE_TEXT=0xff1e1e2e      # Base (dark text on mauve)
+INACTIVE_TEXT=0xff6c7086    # Overlay0
+TEXT_COLOR=0xffcdd6f4       # Text
+
+FONT="JetBrainsMono Nerd Font"
+
+# -- Bar --
+sketchybar --bar \
+  height=32 \
+  color="$BAR_COLOR" \
+  position=top \
+  sticky=on \
+  padding_left=8 \
+  padding_right=8 \
+  corner_radius=0 \
+  blur_radius=20 \
+  shadow=off
+
+# -- Defaults --
+sketchybar --default \
+  padding_left=4 \
+  padding_right=4 \
+  icon.font="$FONT:Bold:14.0" \
+  icon.color="$TEXT_COLOR" \
+  label.font="$FONT:Bold:13.0" \
+  label.color="$TEXT_COLOR" \
+  background.corner_radius=6 \
+  background.height=24
+
+# -- AeroSpace workspace indicators --
+sketchybar --add event aerospace_workspace_change
+
+for sid in $(aerospace list-workspaces --all); do
+  sketchybar --add item "space.$sid" left \
+    --subscribe "space.$sid" aerospace_workspace_change \
+    --set "space.$sid" \
+      background.color="$ACTIVE_BG" \
+      background.drawing=off \
+      label="$sid" \
+      label.color="$INACTIVE_TEXT" \
+      label.padding_left=8 \
+      label.padding_right=8 \
+      click_script="aerospace workspace $sid" \
+      script="$CONFIG_DIR/plugins/aerospace.sh $sid"
+done
+
+# -- Clock (right) --
+sketchybar --add item clock right \
+  --set clock \
+    update_freq=30 \
+    label.padding_right=4 \
+    script='sketchybar --set $NAME label="$(date "+%a %d %b  %H:%M")"'
+
+# -- Init --
+sketchybar --update

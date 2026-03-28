@@ -1,5 +1,5 @@
-# Unified nix config — macOS (salvia) + NixOS (carbon).
-# To migrate salvia to Apple Silicon, change darwinSystem to "aarch64-darwin".
+# Unified nix config — macOS (silicon, germanium) + NixOS (carbon).
+# Three hosts: silicon (x86_64-darwin), germanium (aarch64-darwin), carbon (x86_64-linux).
 {
   description = "nix-darwin + NixOS configuration";
 
@@ -75,17 +75,27 @@
     let
       inherit (self) outputs;
 
-      # --- macOS (salvia) ---
-      darwinSystem = "x86_64-darwin"; # Change to "aarch64-darwin" for Apple Silicon
-      darwinHostname = "salvia";
-      darwinUsername = "anthonyhan";
+      # --- macOS (silicon) — Intel Mac, period 3 ---
+      siliconSystem = "x86_64-darwin";
+      siliconHostname = "silicon";
+      siliconUsername = "chloride";
+
+      # --- macOS (germanium) — Apple Silicon, period 4 ---
+      germaniumSettings = {
+        username = "bromide";
+        hostname = "germanium";
+        editor = "nvim";
+        browser = "firefox";
+        terminal = "ghostty";
+        terminalFileManager = "yazi";
+      };
 
       # --- NixOS (carbon) ---
       carbonSettings = {
         username = "fluoride";
         editor = "nixvim";
         browser = "firefox";
-        terminal = "kitty";
+        terminal = "ghostty";
         terminalFileManager = "yazi";
         sddmTheme = "purple_leaves";
         wallpaper = "kurzgesagt";
@@ -113,34 +123,67 @@
         settings = carbonSettings;
       };
 
-      # --- macOS ---
-      darwinConfigurations.${darwinHostname} = nix-darwin.lib.darwinSystem {
-        system = darwinSystem;
-        specialArgs = {
-          inherit inputs;
-          username = darwinUsername;
-          hostname = darwinHostname;
-        };
-        modules = [
-          ./hosts/salvia
-          home-manager.darwinModules.home-manager
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.extraSpecialArgs = {
-              pkgs-stable = import nixpkgs-stable {
-                system = darwinSystem;
-                config.allowUnfree = true;
+      darwinConfigurations = {
+        # --- silicon (Intel Mac, x86_64-darwin) ---
+        ${siliconHostname} = nix-darwin.lib.darwinSystem {
+          system = siliconSystem;
+          specialArgs = {
+            inherit self inputs;
+            username = siliconUsername;
+            hostname = siliconHostname;
+            terminalFileManager = "yazi";
+          };
+          modules = [
+            ./hosts/silicon
+            home-manager.darwinModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.backupFileExtension = "bak";
+              home-manager.extraSpecialArgs = {
+                pkgs-stable = import nixpkgs-stable {
+                  system = siliconSystem;
+                  config.allowUnfree = true;
+                };
               };
-            };
-            home-manager.users.${darwinUsername} = {
-              imports = [
-                sops-nix.homeManagerModules.sops
-                ./home
-              ];
-            };
-          }
-        ];
+              home-manager.users.${siliconUsername} = {
+                imports = [
+                  sops-nix.homeManagerModules.sops
+                  ./home
+                ];
+              };
+            }
+          ];
+        };
+
+        # --- germanium (Apple Silicon, aarch64-darwin, period 4) ---
+        germanium = nix-darwin.lib.darwinSystem {
+          system = "aarch64-darwin";
+          specialArgs = {
+            inherit self inputs outputs;
+          } // germaniumSettings;
+          modules = [
+            ./hosts/germanium/configuration.nix
+            home-manager.darwinModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.backupFileExtension = "bak";
+              home-manager.extraSpecialArgs = {
+                pkgs-stable = import nixpkgs-stable {
+                  system = "aarch64-darwin";
+                  config.allowUnfree = true;
+                };
+              };
+              home-manager.users.${germaniumSettings.username} = {
+                imports = [
+                  sops-nix.homeManagerModules.sops
+                  ./home
+                ];
+              };
+            }
+          ];
+        };
       };
 
       # --- NixOS server ---

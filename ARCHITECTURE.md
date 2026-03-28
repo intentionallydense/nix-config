@@ -1,63 +1,118 @@
 # Architecture
 
-Unified flake managing macOS host "salvia" (nix-darwin + home-manager) and NixOS
-server "carbon". Both share a single `nixpkgs` input.
+Unified flake managing three hosts: macOS "silicon" (x86_64-darwin), macOS "germanium"
+(aarch64-darwin), and NixOS server "carbon" (x86_64-linux). All share a single nixpkgs
+input and a set of portable home-manager modules.
+
+Naming scheme: hosts are group 14 elements, usernames are group 17 halides, SSH aliases
+are group 15 pnictogens, computer names are group 18 noble gases.
 
 ## File map
 
 ```
-flake.nix                         Entry point: all inputs, darwinConfigurations + nixosConfigurations
+flake.nix                             Entry point: inputs, darwinConfigurations, nixosConfigurations
+
 hosts/
-  salvia/default.nix              macOS system config: nix settings, brew casks, macOS defaults
-  carbon/configuration.nix        NixOS system config: imports all server modules
-  carbon/hardware-configuration.nix  Auto-generated hardware config for the server
-  common.nix                      Shared NixOS config: users, boot, audio, fonts, nix settings
+  silicon/default.nix                 macOS Intel (chloride): nix settings, brew casks, macOS defaults
+  germanium/configuration.nix         macOS Apple Silicon (bromide): brew casks, macOS defaults, claude-wrapper
+  carbon/configuration.nix            NixOS (fluoride): imports all server modules (Hyprland, hardware, etc.)
+  carbon/hardware-configuration.nix   Auto-generated hardware config for the NixOS server
+  common.nix                          Shared NixOS config: users, boot, audio, fonts, nix settings
+
 home/
-  default.nix                     macOS home-manager: fish, zsh, git, ssh, direnv, ghostty, sops
-modules/                          NixOS server modules (desktop, hardware, programs, themes, scripts)
-overlays/default.nix              Custom overlays (NUR, stable nixpkgs, custom packages)
-pkgs/                             Custom derivations (sddm themes, etc.)
-secrets/                          sops-encrypted secrets (age-encrypted via SSH key)
-.sops.yaml                        sops key configuration
-nix-server/                       Original NixOS config archive (reference only)
+  default.nix                         macOS-only home-manager (fish extensions, sops, ssh, direnv stable override)
+
+modules/
+  home/                               ** Shared home-manager modules — portable to NixOS + darwin **
+    default.nix                       Imports all sub-modules below
+    cli/                              Common CLI tools (bat, eza, fzf, htop, jq, ripgrep)
+    fish/                             Fish shell (greeting, platform-aware aliases)
+    git/                              Git (identity, SSH signing, delta pager)
+    ghostty/                          Ghostty terminal (Catppuccin Mocha, installs on Linux, config on both)
+    starship/                         Shell prompt
+    tmux/                             Terminal multiplexer
+    direnv/                           Per-project env (+ nix-direnv)
+    lazygit/                          Git TUI with catppuccin theme
+    btop/                             System monitor with catppuccin theme
+    yazi/                             Terminal file manager
+    zsh/                              Zsh config (NixOS aliases gated behind isLinux)
+    cava/                             Audio visualizer (entire module gated behind isLinux)
+
+  darwin/                             ** macOS-only modules **
+    aerospace/                        Tiling WM config, app launcher, project picker, session switcher, scratchpad
+    karabiner/                        Caps→Escape/Hyper key mapping
+    sketchybar/                       Menu bar with AeroSpace workspace indicators
+
+  desktop/                            NixOS desktop environments (Hyprland, i3, GNOME)
+  hardware/                           NixOS hardware (GPU drivers, drive mounts)
+  programs/                           NixOS program modules (browsers, editors, media, misc)
+  scripts/                            NixOS shell scripts (screenshot, rebuild, etc.)
+  themes/                             GTK/QT themes (Catppuccin)
+
+overlays/default.nix                  Custom overlays (NUR, stable nixpkgs, custom packages)
+pkgs/                                 Custom derivations (SDDM themes, etc.)
+secrets/                              sops-encrypted secrets (silicon)
+.sops.yaml                            sops key configuration
 ```
 
 ## Key decisions
 
-- **Official Nix installer** (not Determinate): Determinate dropped x86_64-darwin support.
-  nix-darwin manages nix.conf and the daemon.
-- **Fish as primary shell**: Migrating from zsh. Both are configured — zsh kept for
-  compatibility with version managers that don't support fish natively (nvm).
-- **Homebrew for GUI casks only**: CLI tools go in nixpkgs. Homebrew is kept solely
-  for macOS GUI apps not packaged in nixpkgs.
-- **sops-nix via home-manager**: Secrets encrypted with age, derived from the SSH
-  ed25519 key. Decrypted at home-manager activation time, not system-level.
-- **Ghostty**: Installed via homebrew cask, config managed by home-manager via
-  xdg.configFile (avoids nixpkgs build issues on x86_64-darwin).
-- **Single `darwinSystem` variable**: Changing `"x86_64-darwin"` to `"aarch64-darwin"`
-  in flake.nix is the only change for Apple Silicon migration.
-- **Server config preserved**: The NixOS "carbon" config was extracted from the zip
-  with its module structure intact. Module import paths (../../modules/...) resolve
-  correctly from hosts/carbon/.
+- **modules/home/ is the shared layer**: All pure home-manager modules (starship, tmux,
+  fish, git, ghostty, cli tools, zsh, etc.) live here and are imported by both darwin and
+  NixOS hosts. NixOS-only features (fonts.packages, ALSA-dependent programs, Linux-specific
+  aliases) are gated behind `lib.mkIf pkgs.stdenv.isLinux`.
+- **home-manager.sharedModules pattern**: Shared modules use `home-manager.sharedModules`
+  rather than being pure HM modules. This lets them set system-level options alongside
+  HM config and works identically in both NixOS and nix-darwin contexts.
+- **Fish is the primary shell on all hosts**: Both macOS and NixOS use fish as the default
+  interactive shell. Zsh remains enabled for script compatibility and has its own config
+  module. Tmux also defaults to fish.
+- **Ghostty is the terminal on all hosts**: Catppuccin Mocha themed, no window decorations.
+  Installed via homebrew cask on macOS, via nixpkgs on NixOS. macOS-specific settings
+  (option-as-alt, keybind overrides) are gated behind isDarwin.
+- **Git identity is shared**: Same user/email/signing config across all hosts via
+  modules/home/git. SSH key signing with ed25519.
+- **CLI tools as programs.* not packages**: bat, eza, fzf, htop, jq, ripgrep are configured
+  via home-manager programs.* for proper shell integration, not just installed as packages.
+- **Aerospace keybinds**: cmd-shift is the system modifier (AeroSpace), alt is reserved
+  for app-level bindings (Ghostty, tmux). Vim keys for focus/move, resize mode, workspaces
+  1-10. App launcher letters aligned with Hyprland (T=terminal, E=files, etc.).
+- **Aerospace requires nikitabobko/tap**: Not in the default homebrew cask repo. Both
+  silicon and germanium declare this tap in their homebrew config.
+- **App launcher**: choose-gui (open-source dmenu clone) piped through a shell script,
+  triggered by cmd-shift-space. AeroSpace floats the choose window.
+- **SketchyBar**: Launched by AeroSpace on startup, notified on workspace change via
+  `exec-on-workspace-change`. Catppuccin Mocha themed.
+- **Karabiner**: Caps Lock → Escape (tap) / Hyper (Cmd+Ctrl+Opt+Shift, hold).
+  Deployed declaratively via home.file with force=true since Karabiner rewrites its config.
+  Activation hook kills the GUI to prevent it popping up on rebuild.
+- **Activation hooks**: AeroSpace relaunches on rebuild (picks up config changes).
+  Karabiner GUI gets killed on rebuild (prevents popup). Both via home.activation.
+- **Both Macs share home/default.nix**: macOS-specific fish extensions (conda, ghcup, etc.),
+  SSH match blocks, direnv stable override, sops. Portable programs moved to modules/home/.
+- **Three hosts coexist**: silicon (Intel Mac, fish), germanium (ARM Mac, fish),
+  carbon (NixOS, Hyprland, fish). All import modules/home/; Macs also import home/default.nix.
 
 ## Data flow
 
 ```
 flake.nix
-  ├── darwinConfigurations.salvia
-  │     ├── hosts/salvia/default.nix    (system: brew, defaults, nix settings)
-  │     └── home/default.nix            (user: fish, git+ssh-signing, direnv, ghostty, sops)
-  │           └── sops-nix.homeManagerModules.sops
+  ├── darwinConfigurations.silicon
+  │     ├── hosts/silicon/default.nix
+  │     ├── modules/home/*            (shared: fish, git, ghostty, cli, tmux, zsh, etc.)
+  │     ├── modules/darwin/aerospace  (tiling WM + app launcher)
+  │     ├── modules/darwin/karabiner  (key remapping)
+  │     ├── modules/darwin/sketchybar (workspace bar)
+  │     └── home/default.nix (macOS fish extensions, sops, ssh, direnv override)
+  ├── darwinConfigurations.germanium
+  │     ├── hosts/germanium/configuration.nix
+  │     ├── modules/home/*            (shared: fish, git, ghostty, cli, tmux, zsh, etc.)
+  │     ├── modules/darwin/aerospace  (tiling WM + app launcher)
+  │     ├── modules/darwin/karabiner  (key remapping)
+  │     ├── modules/darwin/sketchybar (workspace bar)
+  │     └── home/default.nix (macOS fish extensions, sops, ssh, direnv override)
   └── nixosConfigurations.carbon
         ├── hosts/carbon/configuration.nix → hosts/common.nix
-        └── modules/**                     (hyprland, programs, hardware, themes)
-```
-
-## Secrets flow
-
-```
-~/.ssh/id_ed25519 → ssh-to-age → age key
-.sops.yaml defines which age keys can decrypt
-sops secrets/secrets.yaml → encrypted at rest
-darwin-rebuild switch → home-manager activates → sops decrypts to /run/user/.../secrets
+        ├── modules/home/*           (shared: fish, git, ghostty, cli, tmux, zsh, etc.)
+        └── modules/{desktop,hardware,programs}/* (NixOS-only)
 ```

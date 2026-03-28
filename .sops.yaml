@@ -11,9 +11,9 @@
 #   4. Create a secret file:
 #      sops secrets/secrets.yaml
 keys:
-  - &anthonyhan_salvia age1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  # TODO: replace with ssh-to-age output
+  - &chloride_silicon age16t99hyvd4vazjcv53vk24hxs7kevq3r8jep38c69tu6gk65laddsfgg6d6
 creation_rules:
   - path_regex: secrets/.*\.yaml$
     key_groups:
       - age:
-          - *anthonyhan_salvia
+          - *chloride_silicon

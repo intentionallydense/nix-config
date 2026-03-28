@@ -1,4 +1,4 @@
-# System-level nix-darwin configuration for the "salvia" host.
+# System-level nix-darwin configuration for the "silicon" host (x86_64-darwin, period 3).
 # Manages: nix settings, system packages, homebrew casks, macOS defaults.
 # Used by: flake.nix as the main darwin module.
 {
@@ -9,6 +9,13 @@
 }:
 
 {
+  imports = [
+    ../../modules/home # Shared home-manager modules (starship, tmux, zsh, etc.)
+    ../../modules/darwin/aerospace
+    ../../modules/darwin/karabiner
+    ../../modules/darwin/sketchybar
+  ];
+
   # --- Primary user (required by nix-darwin for user-specific options) ---
   system.primaryUser = username;
 
@@ -28,7 +35,8 @@
 
   # --- Networking ---
   networking.hostName = hostname;
-  networking.localHostName = "salvia";
+  networking.localHostName = hostname;
+  networking.computerName = "argon";
 
   # --- Users ---
   users.users.${username} = {
@@ -67,6 +75,12 @@
       autoUpdate = true;
       upgrade = true;
     };
+    taps = [
+      "nikitabobko/tap" # AeroSpace tiling WM
+    ];
+    brews = [
+      "choose-gui" # Fuzzy picker for app launcher script
+    ];
     casks = [
       # Browsers
       "firefox"
@@ -75,6 +89,10 @@
 
       # Terminal
       "ghostty"
+
+      # Window management
+      "aerospace"
+      "karabiner-elements"
 
       # Communication
       "signal"
@@ -109,7 +127,6 @@
       "virtualbox"
 
       # File sharing
-      "qbittorrent"
       "freetube"
 
       # Gaming
@@ -117,6 +134,7 @@
 
       # Crypto wallets
       "electrum"
+
     ];
   };
 
@@ -134,6 +152,7 @@
       InitialKeyRepeat = 15;
       "com.apple.swipescrolldirection" = false; # Disable natural scrolling
       AppleShowAllExtensions = true;
+      NSAutomaticWindowAnimationsEnabled = false; # Reduces jank with AeroSpace workspace switching
     };
 
     finder = {

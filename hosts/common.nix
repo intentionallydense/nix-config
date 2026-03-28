@@ -47,6 +47,23 @@
         # Let Home Manager install and manage itself.
         programs.home-manager.enable = true;
 
+        # SSH client config — element naming: SSH aliases use group 15 of target's period
+        programs.ssh = {
+          enable = true;
+          matchBlocks = {
+            "phosphorus" = {
+              # silicon (Intel Mac, period 3) — group 15 = phosphorus
+              user = "chloride";
+              hostname = "silicon"; # Tailscale MagicDNS
+            };
+            "arsenic" = {
+              # germanium (Apple Silicon Mac, period 4) — group 15 = arsenic
+              user = "bromide";
+              hostname = "germanium"; # Tailscale MagicDNS
+            };
+          };
+        };
+
         xdg.enable = true;
         xdg.portal = {
           enable = true;
@@ -67,19 +84,13 @@
           };
           # Packages that don't require configuration. If you're looking to configure a program see the /modules dir
           packages = with pkgs; [
-            # Applications
-            #kate
-
-            # Terminal
-            fzf
+            # CLI tools managed as programs.* by modules/home/cli: bat, eza, fzf, htop, jq, ripgrep
+            # Git managed by modules/home/git
             fd
-            git
             gh
-            htop
             libjxl
             microfetch
             nix-prefetch-scripts
-            ripgrep
             tldr
             unrar
             unzip
@@ -220,9 +231,10 @@
   # Enable touchpad support (enabled default in most desktopManager).
   services.libinput.enable = true;
 
-  # Default shell
+  # Default shell — fish primary (matches macOS), zsh kept for scripts/compatibility
+  programs.fish.enable = true;
   programs.zsh.enable = true;
-  users.defaultUserShell = pkgs.zsh;
+  users.defaultUserShell = pkgs.fish;
 
   fonts.fontDir.enable = true;
   fonts.packages = with pkgs.nerd-fonts; [

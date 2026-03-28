@@ -1,0 +1,144 @@
+# Aerospace tiling window manager config.
+# cmd-shift = system (AeroSpace), alt = app-level (Ghostty, tmux, etc.).
+
+start-at-login = true
+after-login-command = []
+after-startup-command = ['exec-and-forget sketchybar']
+
+# Notify SketchyBar on workspace switch
+exec-on-workspace-change = [
+  '/bin/bash', '-c',
+  'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE',
+]
+
+default-root-container-layout = 'tiles'
+default-root-container-orientation = 'auto'
+
+enable-normalization-flatten-containers = true
+enable-normalization-opposite-orientation-for-nested-containers = true
+
+accordion-padding = 30
+automatically-unhide-macos-hidden-apps = true
+
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+
+# Float rules — apps that shouldn't be tiled
+[[on-window-detected]]
+if.app-name-regex-substring = 'choose'
+run = 'layout floating'
+
+# Catch-all: force all other windows into tiling.
+# Without this, AeroSpace's built-in heuristics silently float windows it
+# considers "non-standard" (Beeper, System Settings, etc.).
+[[on-window-detected]]
+run = 'layout tiling'
+
+[gaps]
+inner.horizontal = 4
+inner.vertical = 4
+outer.left = 9
+outer.right = 9
+outer.top = 9
+outer.bottom = 9
+
+[mode.main.binding]
+# -- Window management --
+# Modifier scheme: cmd-shift = system (AeroSpace), alt = app-level (Ghostty, tmux, etc.)
+cmd-shift-q = 'close'
+cmd-shift-w = 'layout floating tiling'
+cmd-shift-enter = 'fullscreen'
+
+# Focus (vim keys)
+cmd-shift-h = 'focus left'
+cmd-shift-j = 'focus down'
+cmd-shift-k = 'focus up'
+cmd-shift-l = 'focus right'
+
+# Move window
+cmd-ctrl-shift-h = 'move left'
+cmd-ctrl-shift-j = 'move down'
+cmd-ctrl-shift-k = 'move up'
+cmd-ctrl-shift-l = 'move right'
+
+# Layout toggles
+cmd-shift-slash = 'layout tiles horizontal vertical'
+cmd-shift-comma = 'layout accordion horizontal vertical'
+
+# Workspaces
+cmd-shift-1 = 'workspace 1'
+cmd-shift-2 = 'workspace 2'
+cmd-shift-3 = 'workspace 3'
+cmd-shift-4 = 'workspace 4'
+cmd-shift-5 = 'workspace 5'
+cmd-shift-6 = 'workspace 6'
+cmd-shift-7 = 'workspace 7'
+cmd-shift-8 = 'workspace 8'
+cmd-shift-9 = 'workspace 9'
+cmd-shift-0 = 'workspace 10'
+
+# Move to workspace
+cmd-ctrl-shift-1 = 'move-node-to-workspace 1'
+cmd-ctrl-shift-2 = 'move-node-to-workspace 2'
+cmd-ctrl-shift-3 = 'move-node-to-workspace 3'
+cmd-ctrl-shift-4 = 'move-node-to-workspace 4'
+cmd-ctrl-shift-5 = 'move-node-to-workspace 5'
+cmd-ctrl-shift-6 = 'move-node-to-workspace 6'
+cmd-ctrl-shift-7 = 'move-node-to-workspace 7'
+cmd-ctrl-shift-8 = 'move-node-to-workspace 8'
+cmd-ctrl-shift-9 = 'move-node-to-workspace 9'
+cmd-ctrl-shift-0 = 'move-node-to-workspace 10'
+
+# Workspace navigation
+cmd-shift-tab = 'workspace-back-and-forth'
+
+# -- App launchers (letters match Hyprland: T=terminal, F→B=browser, E=files) --
+# Double-quoted TOML so \" becomes literal " in the osascript command.
+# osascript activate forces macOS to focus the window after open -na.
+cmd-shift-t = "exec-and-forget /usr/bin/open -na Ghostty; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
+cmd-shift-f = "exec-and-forget /usr/bin/open -na Firefox; /usr/bin/osascript -e 'tell application \"Firefox\" to activate'"
+cmd-shift-e = 'exec-and-forget /usr/bin/open ~/'
+cmd-shift-m = "exec-and-forget /usr/bin/open -na 'Beeper Desktop'; /usr/bin/osascript -e 'tell application \"Beeper Desktop\" to activate'"
+
+# -- Firefox profiles (z/x/c/v) — --no-remote starts a separate process per profile --
+cmd-shift-z = 'exec-and-forget /Applications/Firefox.app/Contents/MacOS/firefox --no-remote -P Personal'
+cmd-shift-x = 'exec-and-forget /Applications/Firefox.app/Contents/MacOS/firefox --no-remote -P Social'
+cmd-shift-c = 'exec-and-forget /Applications/Firefox.app/Contents/MacOS/firefox --no-remote -P Academic'
+cmd-shift-v = 'exec-and-forget /Applications/Firefox.app/Contents/MacOS/firefox --no-remote -P Sensitive'
+
+# -- Utilities (matching Carbon Hyprland) --
+cmd-shift-space = 'exec-and-forget ~/.config/aerospace/scripts/app-launcher.sh'
+cmd-shift-d = "exec-and-forget /usr/bin/open -na Ghostty --args -e btop; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
+cmd-shift-i = "exec-and-forget /usr/bin/open -na Ghostty --args -e ~/.config/aerospace/scripts/keybinds.sh; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
+cmd-shift-u = "exec-and-forget /usr/bin/open -na Ghostty --args -e sudo darwin-rebuild switch --flake ~/projects/active/nix-config#silicon; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
+
+# -- Relative workspace navigation --
+cmd-shift-left = 'workspace prev --wrap-around'
+cmd-shift-right = 'workspace next --wrap-around'
+cmd-shift-down = 'workspace next --wrap-around' # TODO: no native "first empty" — this cycles forward as a workaround
+
+# -- Move window to prev/next workspace --
+cmd-ctrl-shift-left = 'move-node-to-workspace prev --wrap-around'
+cmd-ctrl-shift-right = 'move-node-to-workspace next --wrap-around'
+
+
+# -- Workspace management --
+cmd-shift-n = 'exec-and-forget ~/.config/aerospace/scripts/consolidate-workspaces.sh'
+cmd-shift-s = 'exec-and-forget ~/.config/aerospace/scripts/swap-workspaces.sh'
+
+# -- Productivity --
+cmd-shift-p = 'exec-and-forget ~/.config/aerospace/scripts/project-picker.sh'
+cmd-shift-a = 'exec-and-forget ~/.config/aerospace/scripts/session-switcher.sh'
+cmd-shift-b = 'exec-and-forget ~/.config/aerospace/scripts/claude-session-picker.sh'
+cmd-shift-o = 'exec-and-forget ~/.config/aerospace/scripts/scratchpad.sh'
+cmd-shift-y = 'exec-and-forget ~/.config/aerospace/scripts/publish.sh'
+
+# -- Resize mode --
+cmd-shift-r = 'mode resize'
+
+[mode.resize.binding]
+h = 'resize width -50'
+j = 'resize height +50'
+k = 'resize height -50'
+l = 'resize width +50'
+enter = 'mode main'
+esc = 'mode main'
