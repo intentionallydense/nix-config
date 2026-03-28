@@ -74,6 +74,22 @@
         user = "fluoride";
         hostname = "carbon"; # Tailscale MagicDNS
       };
+      "carbon" = {
+        # direct alias for carbon (used by colab tunnel)
+        user = "fluoride";
+        hostname = "carbon";
+      };
+      "colab" = {
+        # Colab Pro VM via reverse tunnel through carbon
+        hostname = "localhost";
+        port = 2222;
+        user = "root";
+        proxyJump = "carbon";
+        extraOptions = {
+          StrictHostKeyChecking = "no";
+          UserKnownHostsFile = "/dev/null";
+        };
+      };
     };
   };
 

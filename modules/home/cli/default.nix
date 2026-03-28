@@ -11,7 +11,7 @@
       programs.eza = {
         enable = true;
         enableFishIntegration = true;
-        # Zsh integration disabled — modules/home/zsh has custom eza aliases with --icons
+        # Zsh integration disabled — modules/home/fish has custom eza aliases with --icons
       };
 
       programs.fzf = {

@@ -77,16 +77,16 @@ cmd-shift-9 = 'workspace 9'
 cmd-shift-0 = 'workspace 10'
 
 # Move to workspace
-cmd-ctrl-shift-1 = 'move-node-to-workspace 1'
-cmd-ctrl-shift-2 = 'move-node-to-workspace 2'
-cmd-ctrl-shift-3 = 'move-node-to-workspace 3'
-cmd-ctrl-shift-4 = 'move-node-to-workspace 4'
-cmd-ctrl-shift-5 = 'move-node-to-workspace 5'
-cmd-ctrl-shift-6 = 'move-node-to-workspace 6'
-cmd-ctrl-shift-7 = 'move-node-to-workspace 7'
-cmd-ctrl-shift-8 = 'move-node-to-workspace 8'
-cmd-ctrl-shift-9 = 'move-node-to-workspace 9'
-cmd-ctrl-shift-0 = 'move-node-to-workspace 10'
+cmd-ctrl-shift-1 = ['move-node-to-workspace 1', 'workspace 1']
+cmd-ctrl-shift-2 = ['move-node-to-workspace 2', 'workspace 2']
+cmd-ctrl-shift-3 = ['move-node-to-workspace 3', 'workspace 3']
+cmd-ctrl-shift-4 = ['move-node-to-workspace 4', 'workspace 4']
+cmd-ctrl-shift-5 = ['move-node-to-workspace 5', 'workspace 5']
+cmd-ctrl-shift-6 = ['move-node-to-workspace 6', 'workspace 6']
+cmd-ctrl-shift-7 = ['move-node-to-workspace 7', 'workspace 7']
+cmd-ctrl-shift-8 = ['move-node-to-workspace 8', 'workspace 8']
+cmd-ctrl-shift-9 = ['move-node-to-workspace 9', 'workspace 9']
+cmd-ctrl-shift-0 = ['move-node-to-workspace 10', 'workspace 10']
 
 # Workspace navigation
 cmd-shift-tab = 'workspace-back-and-forth'
@@ -107,9 +107,9 @@ cmd-shift-v = 'exec-and-forget /Applications/Firefox.app/Contents/MacOS/firefox 
 
 # -- Utilities (matching Carbon Hyprland) --
 cmd-shift-space = 'exec-and-forget ~/.config/aerospace/scripts/app-launcher.sh'
-cmd-shift-d = "exec-and-forget /usr/bin/open -na Ghostty --args -e btop; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
-cmd-shift-i = "exec-and-forget /usr/bin/open -na Ghostty --args -e ~/.config/aerospace/scripts/keybinds.sh; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
-cmd-shift-u = "exec-and-forget /usr/bin/open -na Ghostty --args -e sudo darwin-rebuild switch --flake ~/projects/active/nix-config#silicon; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
+cmd-shift-d = "exec-and-forget /usr/bin/open -na Ghostty --args -e /bin/bash -lc btop; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
+cmd-shift-i = "exec-and-forget /usr/bin/open -na Ghostty --args -e /bin/bash -lc ~/.config/aerospace/scripts/keybinds.sh; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
+cmd-shift-u = "exec-and-forget /usr/bin/open -na Ghostty --args -e /bin/bash -lc 'sudo darwin-rebuild switch --flake ~/projects/active/nix-config#silicon'; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
 
 # -- Relative workspace navigation --
 cmd-shift-left = 'workspace prev --wrap-around'

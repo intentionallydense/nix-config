@@ -120,7 +120,13 @@
   };
 
   # SSH (only reachable over Tailscale via trustedInterfaces above)
-  services.openssh.enable = true;
+  # Port 22: handled by Tailscale SSH (identity-based auth)
+  # Port 2200: regular sshd for Colab reverse tunnel (key-based auth,
+  #   bypasses Tailscale SSH which intercepts port 22)
+  services.openssh = {
+    enable = true;
+    ports = [ 22 2200 ];
+  };
 
   networking.nameservers = [ "1.1.1.1" "8.8.8.8" "8.8.4.4" ];
 

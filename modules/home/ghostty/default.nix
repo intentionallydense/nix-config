@@ -17,6 +17,9 @@
         # Theme
         theme = Catppuccin Mocha
 
+        # Shell
+        command = ${pkgs.fish}/bin/fish
+
         # Window
         window-decoration = false
         window-padding-x = 8

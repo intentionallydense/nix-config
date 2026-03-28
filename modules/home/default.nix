@@ -16,8 +16,6 @@
     ./lazygit
     ./btop
     ./yazi
-
-    ./zsh
     ./cava
   ];
 }
