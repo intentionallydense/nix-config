@@ -25,9 +25,11 @@ in
           dreamsofcode-io-catppuccin-tmux
           sensible
           vim-tmux-navigator
+          resurrect
         ];
         extraConfig = ''
           set -g default-shell "${pkgs.fish}/bin/fish"
+          set -g default-command "${pkgs.fish}/bin/fish"
 
           unbind C-b
           set -g prefix C-a
