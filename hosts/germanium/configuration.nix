@@ -220,8 +220,7 @@
     };
 
   # --- Shell ---
-  programs.zsh.enable = true; # Required by shared modules
-  programs.fish.enable = true; # Primary shell
+  programs.fish.enable = true;
 
   # --- Fonts ---
   fonts.packages = with pkgs.nerd-fonts; [

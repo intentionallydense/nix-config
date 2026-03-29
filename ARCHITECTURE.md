@@ -35,7 +35,6 @@ modules/
     lazygit/                          Git TUI with catppuccin theme
     btop/                             System monitor with catppuccin theme
     yazi/                             Terminal file manager
-    zsh/                              Zsh config (NixOS aliases gated behind isLinux)
     cava/                             Audio visualizer (entire module gated behind isLinux)
 
   darwin/                             ** macOS-only modules **
@@ -58,15 +57,14 @@ secrets/                              sops-encrypted secrets (silicon)
 ## Key decisions
 
 - **modules/home/ is the shared layer**: All pure home-manager modules (starship, tmux,
-  fish, git, ghostty, cli tools, zsh, etc.) live here and are imported by both darwin and
+  fish, git, ghostty, cli tools, etc.) live here and are imported by both darwin and
   NixOS hosts. NixOS-only features (fonts.packages, ALSA-dependent programs, Linux-specific
   aliases) are gated behind `lib.mkIf pkgs.stdenv.isLinux`.
 - **home-manager.sharedModules pattern**: Shared modules use `home-manager.sharedModules`
   rather than being pure HM modules. This lets them set system-level options alongside
   HM config and works identically in both NixOS and nix-darwin contexts.
-- **Fish is the primary shell on all hosts**: Both macOS and NixOS use fish as the default
-  interactive shell. Zsh remains enabled for script compatibility and has its own config
-  module. Tmux also defaults to fish.
+- **Fish is the only shell on all hosts**: Both macOS and NixOS use fish as the default
+  interactive shell. Tmux also defaults to fish.
 - **Ghostty is the terminal on all hosts**: Catppuccin Mocha themed, no window decorations.
   Installed via homebrew cask on macOS, via nixpkgs on NixOS. macOS-specific settings
   (option-as-alt, keybind overrides) are gated behind isDarwin.
@@ -99,20 +97,20 @@ secrets/                              sops-encrypted secrets (silicon)
 flake.nix
   ├── darwinConfigurations.silicon
   │     ├── hosts/silicon/default.nix
-  │     ├── modules/home/*            (shared: fish, git, ghostty, cli, tmux, zsh, etc.)
+  │     ├── modules/home/*            (shared: fish, git, ghostty, cli, tmux, etc.)
   │     ├── modules/darwin/aerospace  (tiling WM + app launcher)
   │     ├── modules/darwin/karabiner  (key remapping)
   │     ├── modules/darwin/sketchybar (workspace bar)
   │     └── home/default.nix (macOS fish extensions, sops, ssh, direnv override)
   ├── darwinConfigurations.germanium
   │     ├── hosts/germanium/configuration.nix
-  │     ├── modules/home/*            (shared: fish, git, ghostty, cli, tmux, zsh, etc.)
+  │     ├── modules/home/*            (shared: fish, git, ghostty, cli, tmux, etc.)
   │     ├── modules/darwin/aerospace  (tiling WM + app launcher)
   │     ├── modules/darwin/karabiner  (key remapping)
   │     ├── modules/darwin/sketchybar (workspace bar)
   │     └── home/default.nix (macOS fish extensions, sops, ssh, direnv override)
   └── nixosConfigurations.carbon
         ├── hosts/carbon/configuration.nix → hosts/common.nix
-        ├── modules/home/*           (shared: fish, git, ghostty, cli, tmux, zsh, etc.)
+        ├── modules/home/*           (shared: fish, git, ghostty, cli, tmux, etc.)
         └── modules/{desktop,hardware,programs}/* (NixOS-only)
 ```

@@ -167,8 +167,7 @@
   };
 
   # --- Shell ---
-  programs.zsh.enable = true; # Keep for compatibility during fish migration
-  programs.fish.enable = true; # Primary shell
+  programs.fish.enable = true;
 
   # --- Platform ---
   system.stateVersion = 5;

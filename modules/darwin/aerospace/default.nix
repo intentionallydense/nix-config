@@ -45,6 +45,10 @@
         source = ./scripts/publish.sh;
         executable = true;
       };
+      home.file.".config/aerospace/scripts/reset-workspace.sh" = {
+        source = ./scripts/reset-workspace.sh;
+        executable = true;
+      };
     })
   ];
 }

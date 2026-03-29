@@ -25,18 +25,7 @@
 
           shellInit = ''
             set -g fish_greeting
-          '' + lib.optionalString pkgs.stdenv.isDarwin ''
-            # Auto-proxy: Cambridge firewall resets TCP connections when it
-            # detects Tailscale's WireGuard UDP probes. Route CLI traffic
-            # through wireproxy (personal tunnel) to work around it.
-            # Use `noproxy` to disable, `camproxy` to re-enable manually.
-            if scutil --dns 2>/dev/null | grep -q '\.cam\.ac\.uk'; \
-               and tailscale status &>/dev/null
-              set -gx HTTP_PROXY socks5h://127.0.0.1:1081
-              set -gx HTTPS_PROXY socks5h://127.0.0.1:1081
-              set -gx NO_PROXY 'localhost,127.0.0.1,100.*'
-            end
-          '' + ''
+          + ''
             # Environment
             fish_add_path -g $HOME/.local/bin
 
@@ -195,8 +184,6 @@
             rebuild = "sudo darwin-rebuild switch --flake ~/projects/active/nix-config";
             publish = "python3 ~/projects/active/intentionallydense/publish.py --go --push";
             publish-dry = "python3 ~/projects/active/intentionallydense/publish.py";
-            camproxy = "set -gx HTTP_PROXY socks5h://127.0.0.1:1081; set -gx HTTPS_PROXY socks5h://127.0.0.1:1081; set -gx NO_PROXY 'localhost,127.0.0.1,100.*'";
-            noproxy = "set -e HTTP_PROXY; set -e HTTPS_PROXY; set -e NO_PROXY";
           };
         };
       }

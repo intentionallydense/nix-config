@@ -27,6 +27,13 @@ on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 if.app-name-regex-substring = 'choose'
 run = 'layout floating'
 
+# Firefox sidebar panels are separate OS windows with empty titles.
+# Float them so they don't steal tiling space.
+[[on-window-detected]]
+if.app-name-regex-substring = 'Firefox'
+if.window-title-regex-substring = '^$'
+run = 'layout floating'
+
 # Catch-all: force all other windows into tiling.
 # Without this, AeroSpace's built-in heuristics silently float windows it
 # considers "non-standard" (Beeper, System Settings, etc.).
@@ -124,6 +131,7 @@ cmd-ctrl-shift-right = 'move-node-to-workspace next --wrap-around'
 # -- Workspace management --
 cmd-shift-n = 'exec-and-forget ~/.config/aerospace/scripts/consolidate-workspaces.sh'
 cmd-shift-s = 'exec-and-forget ~/.config/aerospace/scripts/swap-workspaces.sh'
+cmd-shift-backspace = 'exec-and-forget ~/.config/aerospace/scripts/reset-workspace.sh'
 
 # -- Productivity --
 cmd-shift-p = 'exec-and-forget ~/.config/aerospace/scripts/project-picker.sh'

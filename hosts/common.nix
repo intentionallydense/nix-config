@@ -231,9 +231,7 @@
   # Enable touchpad support (enabled default in most desktopManager).
   services.libinput.enable = true;
 
-  # Default shell — fish primary (matches macOS), zsh kept for scripts/compatibility
   programs.fish.enable = true;
-  programs.zsh.enable = true;
   users.defaultUserShell = pkgs.fish;
 
   fonts.fontDir.enable = true;
