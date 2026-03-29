@@ -16,6 +16,10 @@ in
 {
   home-manager.sharedModules = [
     (_: {
+      home.file.".config/tmux/scripts/tmuxp-load.sh" = {
+        source = ./scripts/tmuxp-load.sh;
+        executable = true;
+      };
       programs.tmux = {
         enable = true;
         clock24 = true;
@@ -25,7 +29,6 @@ in
           dreamsofcode-io-catppuccin-tmux
           sensible
           vim-tmux-navigator
-          resurrect
         ];
         extraConfig = ''
           set -g default-shell "${pkgs.fish}/bin/fish"
@@ -82,6 +85,12 @@ in
           bind-key -T copy-mode-vi v send-keys -X begin-selection
           bind-key -T copy-mode-vi C-v send-keys -X rectangle-toggle
           bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
+
+          # tmuxp: save current session layout (prefix + Ctrl-s)
+          bind C-s run-shell 'mkdir -p $HOME/.config/tmuxp && tmuxp freeze #{session_name} -y -q --force -o $HOME/.config/tmuxp/#{session_name}.yaml && tmux display-message "Saved: #{session_name}"'
+
+          # tmuxp: load a session via fzf picker (prefix + Ctrl-r)
+          bind C-r display-popup -E '~/.config/tmux/scripts/tmuxp-load.sh'
         '';
       };
     })

@@ -25,7 +25,7 @@
 
           shellInit = ''
             set -g fish_greeting
-          + ''
+          '' + ''
             # Environment
             fish_add_path -g $HOME/.local/bin
 

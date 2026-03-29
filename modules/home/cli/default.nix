@@ -2,10 +2,12 @@
 # Configures bat, eza, fzf, htop, jq, ripgrep as home-manager programs
 # (with shell integration) rather than bare packages.
 # Used by: modules/home/default.nix
-{ ... }:
+{ pkgs, ... }:
 {
   home-manager.sharedModules = [
     (_: {
+      home.packages = [ pkgs.tmuxp ];
+
       programs.bat.enable = true;
 
       programs.eza = {
