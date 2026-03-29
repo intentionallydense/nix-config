@@ -17,7 +17,7 @@
         settings = {
           user = {
             name = "saliva";
-            email = "sylvestria.h@gmail.com";
+            email = "intentionallydense@users.noreply.github.com";
           };
           init.defaultBranch = "main";
           merge.conflictstyle = "zdiff3";

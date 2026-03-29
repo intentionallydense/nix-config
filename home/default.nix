@@ -80,7 +80,9 @@
         hostname = "carbon";
       };
       "colab" = {
-        # Colab Pro VM via reverse tunnel through carbon
+        # Colab Pro VM via reverse tunnel through carbon.
+        # Host key checking is disabled because Colab VMs are ephemeral —
+        # each session gets a new host key, so verification is meaningless.
         hostname = "localhost";
         port = 2222;
         user = "root";
