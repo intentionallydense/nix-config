@@ -49,6 +49,7 @@ cat <<'EOF'
 ║  WORKSPACE MANAGEMENT                                        ║
 ║  cmd-shift-n          Consolidate (renumber 1, 2, 3...)      ║
 ║  cmd-shift-s          Swap two workspaces                    ║
+║  cmd-shift-backspace  Reset workspace                        ║
 ║                                                              ║
 ║  PRODUCTIVITY                                                ║
 ║  cmd-shift-p          Project picker (choose → tmux)         ║
