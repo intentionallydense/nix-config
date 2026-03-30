@@ -72,12 +72,12 @@
       "nitrogen" = {
         # carbon (NixOS server, period 2) — group 15 = nitrogen
         user = "fluoride";
-        hostname = "carbon"; # Tailscale MagicDNS
+        hostname = "100.124.5.91"; # Tailscale IP (MagicDNS off)
       };
       "carbon" = {
         # direct alias for carbon (used by colab tunnel)
         user = "fluoride";
-        hostname = "carbon";
+        hostname = "100.124.5.91";
       };
       "colab" = {
         # Colab Pro VM via reverse tunnel through carbon.
