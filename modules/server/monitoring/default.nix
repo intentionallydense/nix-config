@@ -1,7 +1,7 @@
 # Monitoring stack: Prometheus collects metrics, Grafana displays them.
 # Node exporter exposes system metrics (CPU, RAM, disk, temps, network).
 # Used by: carbon.
-{ ... }:
+{ config, ... }:
 {
   # Prometheus — time-series metrics database
   services.prometheus = {
@@ -41,8 +41,8 @@
         domain = "grafana.carbon";
       };
 
-      # Secret key for signing — single-user server, no sensitive secrets in Grafana DB
-      security.secret_key = "SW2YcwTIb9zpOOhoPsMm";
+      # Secret key for signing — read from sops-managed secret file
+      security.secret_key = "$__file{${config.sops.secrets.grafana_secret_key.path}}";
 
       # Disable login for local/Tailscale access — single-user server
       "auth.anonymous" = {

@@ -1,5 +1,6 @@
 {
   pkgs,
+  config,
   videoDriver,
   username,
   hostname,
@@ -90,6 +91,13 @@
     imagemagick
     obsidian
   ];
+
+  # --- sops-nix — system-level secrets decrypted at activation ---
+  sops = {
+    defaultSopsFile = ../../secrets/secrets.yaml;
+    age.sshKeyPaths = [ "/home/${username}/.ssh/id_ed25519" ];
+    secrets.grafana_secret_key = { };
+  };
 
   networking.hostName = hostname; # Set hostname defined in flake.nix
 

@@ -189,7 +189,10 @@
       # --- NixOS server ---
       nixosConfigurations.carbon = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        modules = [ ./hosts/carbon/configuration.nix ];
+        modules = [
+          sops-nix.nixosModules.sops
+          ./hosts/carbon/configuration.nix
+        ];
         specialArgs = {
           inherit self inputs outputs;
         } // carbonSettings;
