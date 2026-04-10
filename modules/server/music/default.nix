@@ -135,9 +135,12 @@ in
     description = "Download today's album-of-the-day from Soulseek";
     after = [ "network-online.target" "slskd.service" ];
     wants = [ "network-online.target" ];
+    requires = [ "slskd.service" ];  # don't run if slskd isn't up
     serviceConfig = {
       Type = "oneshot";
       User = username;
+      # Wait 30s for slskd to connect and log in to the Soulseek network
+      ExecStartPre = "${pkgs.coreutils}/bin/sleep 30";
       ExecStart = "${musicPython}/bin/python ${scriptsDir}/aotd-download";
       Environment = [
         "HOME=/home/${username}"

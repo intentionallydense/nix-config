@@ -39,6 +39,7 @@
     ../../modules/server/monitoring  # Prometheus + Grafana
     ../../modules/server/owntracks   # Location tracking (OwnTracks Recorder)
     ../../modules/server/samba       # Network file shares (music, projects)
+    ../../modules/server/backup      # Weekly + monthly rsync backups to external SanDisk 2TB
     ../../modules/server/sunshine    # Remote desktop streaming (Moonlight client)
     ../../modules/programs/misc/thunar
     ../../modules/programs/misc/lact # GPU fan, clock and power configuration

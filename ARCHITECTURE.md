@@ -47,6 +47,7 @@ modules/
     media/                            Jellyfin + *arr suite (Sonarr, Radarr, Lidarr, Prowlarr) with shared media group
     nginx/                            Reverse proxy: *.carbon subdomains for all services
     monitoring/                       Prometheus (node exporter) + Grafana with auto-provisioned datasource
+    backup/                           Weekly + monthly rsync backups to external SanDisk 2TB (--link-dest incremental)
     owntracks/                        OwnTracks Recorder — GPS location tracking (HTTP mode, no MQTT)
 
   desktop/                            NixOS desktop environments (Hyprland, i3, GNOME)
@@ -119,6 +120,6 @@ flake.nix
   └── nixosConfigurations.carbon
         ├── hosts/carbon/configuration.nix → hosts/common.nix
         ├── modules/home/*           (shared: fish, git, ghostty, cli, tmux, etc.)
-        ├── modules/server/*         (power, media, monitoring, owntracks, samba)
+        ├── modules/server/*         (power, media, monitoring, owntracks, samba, backup)
         └── modules/{desktop,hardware,programs}/* (NixOS-only)
 ```
