@@ -81,6 +81,8 @@
     curl
     git
     spawn_fcgi
+    sops           # secrets editing (sops-nix)
+    ssh-to-age     # derive age keys from SSH keys
 
     # familiar sensors
     ffmpeg        # webcam capture
@@ -97,6 +99,13 @@
     defaultSopsFile = ../../secrets/secrets.yaml;
     age.sshKeyPaths = [ "/home/${username}/.ssh/id_ed25519" ];
     secrets.grafana_secret_key = { };
+    secrets.navidrome_user = { };
+    secrets.navidrome_pass = { };
+    secrets.slskd_api_key = { };
+    secrets.slskd_slsk_username = { };
+    secrets.slskd_slsk_password = { };
+    secrets.slskd_web_username = { };
+    secrets.slskd_web_password = { };
   };
 
   networking.hostName = hostname; # Set hostname defined in flake.nix

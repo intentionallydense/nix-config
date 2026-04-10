@@ -5,7 +5,7 @@
 # Auto-import watches incoming/ and processes downloads through beets.
 # aotd-download fetches the daily album-of-the-day from the briefing system.
 # Used by: carbon.
-{ pkgs, username, ... }:
+{ pkgs, config, username, ... }:
 let
   musicDir = "/home/${username}/music_library";
   scriptsDir = "${musicDir}/scripts";
@@ -52,14 +52,30 @@ in
     "d /home/${username} 0701 ${username} users -"
   ];
 
+  # --- sops templates: compose secrets into env files for services ---
+  sops.templates."slskd-env".content = ''
+    SLSKD_SLSK_USERNAME=${config.sops.placeholder.slskd_slsk_username}
+    SLSKD_SLSK_PASSWORD=${config.sops.placeholder.slskd_slsk_password}
+    SLSKD_API_KEY=${config.sops.placeholder.slskd_api_key}
+    SLSKD_USERNAME=${config.sops.placeholder.slskd_web_username}
+    SLSKD_PASSWORD=${config.sops.placeholder.slskd_web_password}
+  '';
+  sops.templates."music-shelf-env".content = ''
+    NAVIDROME_URL=http://localhost:4533
+    NAVIDROME_USER=${config.sops.placeholder.navidrome_user}
+    NAVIDROME_PASS=${config.sops.placeholder.navidrome_pass}
+    SLSKD_URL=http://localhost:5030
+    SLSKD_API_KEY=${config.sops.placeholder.slskd_api_key}
+  '';
+
   # --- slskd: headless Soulseek client ---
   # Web UI at :5030, downloads to incoming/, shares library/ back to the network.
-  # Credentials stored in ~/.config/slskd/env (SLSKD_SLSK_USERNAME, SLSKD_SLSK_PASSWORD, SLSKD_API_KEY).
+  # Credentials managed by sops-nix (see sops.templates above).
   services.slskd = {
     enable = true;
     openFirewall = true;
     domain = null; # No nginx reverse proxy — accessed directly over Tailscale
-    environmentFile = "/home/${username}/.config/slskd/env";
+    environmentFile = config.sops.templates."slskd-env".path;
     settings = {
       directories = {
         downloads = "${musicDir}/incoming";
@@ -94,14 +110,8 @@ in
       ExecStart = "${musicPython}/bin/python -m uvicorn server:app --host 0.0.0.0 --port 4534";
       Restart = "on-failure";
       RestartSec = 5;
-      # Credentials: Navidrome user/pass for Subsonic API, slskd API key.
-      # Create /home/${username}/.config/music-shelf/env with:
-      #   NAVIDROME_URL=http://localhost:4533
-      #   NAVIDROME_USER=your_navidrome_username
-      #   NAVIDROME_PASS=your_navidrome_password
-      #   SLSKD_URL=http://localhost:5030
-      #   SLSKD_API_KEY=your_slskd_api_key
-      EnvironmentFile = "/home/${username}/.config/music-shelf/env";
+      # Credentials managed by sops-nix (see sops.templates above)
+      EnvironmentFile = config.sops.templates."music-shelf-env".path;
     };
   };
 
@@ -146,7 +156,7 @@ in
         "HOME=/home/${username}"
         "PATH=/run/current-system/sw/bin"
       ];
-      EnvironmentFile = "/home/${username}/.config/slskd/env";
+      EnvironmentFile = config.sops.templates."slskd-env".path;
       # Generous timeout — slskd searches + downloads can take a while
       TimeoutStartSec = "45min";
     };
