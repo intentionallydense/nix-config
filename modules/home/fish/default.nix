@@ -28,6 +28,7 @@
           '' + ''
             # Environment
             fish_add_path -g $HOME/.local/bin
+            set -gx SOPS_AGE_KEY_FILE "$HOME/.config/sops/age/keys.txt"
 
             set -gx FZF_DEFAULT_OPTS "\
             --color=bg+:#363a4f,bg:#24273a,spinner:#f4dbd6,hl:#ed8796 \
@@ -184,6 +185,7 @@
           } // lib.optionalAttrs pkgs.stdenv.isDarwin {
             # macOS-specific aliases
             rebuild = "sudo darwin-rebuild switch --flake ~/projects/active/nix-config";
+            nrs = "git -C ~/projects/active/nix-config pull origin main && sudo darwin-rebuild switch --flake ~/projects/active/nix-config";
             publish = "python3 ~/projects/active/intentionallydense/publish.py --go --push";
             publish-dry = "python3 ~/projects/active/intentionallydense/publish.py";
           };

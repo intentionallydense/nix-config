@@ -14,6 +14,7 @@
     ../../modules/darwin/aerospace
     ../../modules/darwin/karabiner
     ../../modules/darwin/sketchybar
+    ../../modules/darwin/wireproxy
   ];
 
   # --- Primary user (required by nix-darwin for user-specific options) ---
@@ -131,9 +132,13 @@
 
       # Gaming
       "steam"
+      "moonlight"
 
       # Crypto wallets
       "electrum"
+
+      # Stenography
+      "plover"
 
     ];
   };

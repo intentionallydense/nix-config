@@ -131,7 +131,7 @@ cmd-ctrl-shift-right = 'move-node-to-workspace next --wrap-around'
 # -- Workspace management --
 cmd-shift-n = 'exec-and-forget ~/.config/aerospace/scripts/consolidate-workspaces.sh'
 cmd-shift-s = 'exec-and-forget ~/.config/aerospace/scripts/swap-workspaces.sh'
-cmd-shift-backspace = 'exec-and-forget ~/.config/aerospace/scripts/reset-workspace.sh'
+cmd-shift-backspace = 'exec-and-forget ~/.config/aerospace/scripts/reset-workspace.sh' # purge ghost windows
 
 # -- Productivity --
 cmd-shift-p = 'exec-and-forget ~/.config/aerospace/scripts/project-picker.sh'
@@ -141,7 +141,7 @@ cmd-shift-o = 'exec-and-forget ~/.config/aerospace/scripts/scratchpad.sh'
 cmd-shift-y = 'exec-and-forget ~/.config/aerospace/scripts/publish.sh'
 
 # -- Resize mode --
-cmd-shift-r = 'mode resize'
+cmd-shift-g = 'mode resize'
 
 [mode.resize.binding]
 h = 'resize width -50'

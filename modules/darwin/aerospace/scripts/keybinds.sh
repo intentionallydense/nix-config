@@ -29,7 +29,7 @@ cat <<'EOF'
 ║  LAYOUT                                                      ║
 ║  cmd-shift-/          Toggle tiles H/V                       ║
 ║  cmd-shift-,          Toggle accordion H/V                   ║
-║  cmd-shift-r          Resize mode (hjkl, esc to exit)        ║
+║  cmd-shift-g          Resize mode (hjkl, esc to exit)        ║
 ║                                                              ║
 ║  APP LAUNCHERS                                               ║
 ║  cmd-shift-space      App launcher (choose-gui)              ║

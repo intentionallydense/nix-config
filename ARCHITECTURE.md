@@ -41,6 +41,7 @@ modules/
     aerospace/                        Tiling WM config, app launcher, project picker, session switcher, scratchpad
     karabiner/                        Caps→Escape/Hyper key mapping
     sketchybar/                       Menu bar with AeroSpace workspace indicators
+    wireproxy/                        Mullvad WireGuard SOCKS5 proxies for Firefox profile isolation (sops secrets, launchd agents)
 
   server/                             ** NixOS home server modules (carbon) **
     power/                            Always-on laptop: lid ignore, disable suspend, 80% battery cap (replaces misc/tlp)
@@ -96,6 +97,10 @@ secrets/                              sops-encrypted secrets (silicon)
   Karabiner GUI gets killed on rebuild (prevents popup). Both via home.activation.
 - **Both Macs share home/default.nix**: macOS-specific fish extensions (conda, ghcup, etc.),
   SSH match blocks, direnv stable override, sops. Portable programs moved to modules/home/.
+- **Wireproxy for Firefox profile isolation**: Each Firefox profile routes through a
+  dedicated Mullvad WireGuard exit node via wireproxy (userspace WireGuard → SOCKS5).
+  Private keys are sops-encrypted; configs are generated at activation time. Launchd agents
+  auto-start each tunnel on login. Currently silicon-only (needs sops key per host).
 - **Three hosts coexist**: silicon (Intel Mac, fish), germanium (ARM Mac, fish),
   carbon (NixOS, Hyprland, fish). All import modules/home/; Macs also import home/default.nix.
 
@@ -109,6 +114,7 @@ flake.nix
   │     ├── modules/darwin/aerospace  (tiling WM + app launcher)
   │     ├── modules/darwin/karabiner  (key remapping)
   │     ├── modules/darwin/sketchybar (workspace bar)
+  │     ├── modules/darwin/wireproxy  (Mullvad SOCKS5 proxies for Firefox profiles)
   │     └── home/default.nix (macOS fish extensions, sops, ssh, direnv override)
   ├── darwinConfigurations.germanium
   │     ├── hosts/germanium/configuration.nix

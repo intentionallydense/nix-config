@@ -7,7 +7,10 @@
 
 export PATH="/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin:/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$PATH"
 
-selected=$(find "$HOME/projects" -mindepth 2 -maxdepth 2 -type d 2>/dev/null | sort | choose)
+selected=$({
+  find "$HOME/projects" -mindepth 2 -maxdepth 2 -type d 2>/dev/null
+  echo "$HOME/Documents/obsidian"
+} | sort | choose)
 
 [ -z "$selected" ] && exit 0
 
