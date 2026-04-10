@@ -1,6 +1,7 @@
 # Media server stack: Jellyfin + *arr suite + Immich.
-# Jellyfin streams media, Sonarr/Radarr/Lidarr automate downloads,
-# Prowlarr manages indexers for all three, Immich manages photos.
+# Jellyfin streams video, Sonarr/Radarr automate TV/movie downloads,
+# Prowlarr manages indexers for both, Immich manages photos.
+# Music is handled separately by modules/server/music/.
 # Used by: carbon.
 { pkgs, username, ... }:
 {
@@ -26,13 +27,10 @@
     openFirewall = true; # 7878
   };
 
-  # Lidarr — music automation (artists, albums, quality upgrades)
-  services.lidarr = {
-    enable = true;
-    openFirewall = true; # 8686
-  };
+  # Lidarr removed — music is handled by Navidrome + slskd + beets
+  # in modules/server/music/. See that module for the full music pipeline.
 
-  # Prowlarr — indexer manager, feeds search results to Sonarr/Radarr/Lidarr
+  # Prowlarr — indexer manager, feeds search results to Sonarr/Radarr
   services.prowlarr = {
     enable = true;
     openFirewall = true; # 9696
@@ -65,5 +63,4 @@
   users.users.${username}.extraGroups = [ "media" ];
   users.users.sonarr.extraGroups = [ "media" ];
   users.users.radarr.extraGroups = [ "media" ];
-  users.users.lidarr.extraGroups = [ "media" ];
 }
