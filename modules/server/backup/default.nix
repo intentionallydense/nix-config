@@ -13,7 +13,7 @@ let
     KEEP="$2"  # how many snapshots to retain
 
     # Bail if the drive isn't mounted
-    if ! mountpoint -q "$BACKUP_ROOT"; then
+    if ! ${pkgs.util-linux}/bin/mountpoint -q "$BACKUP_ROOT"; then
       echo "ERROR: $BACKUP_ROOT is not mounted, skipping backup"
       exit 1
     fi
@@ -23,6 +23,7 @@ let
     SNAPSHOT="$DEST_DIR/$TIMESTAMP"
 
     mkdir -p "$DEST_DIR"
+    mkdir -p "$SNAPSHOT/home" "$SNAPSHOT/var-lib"
 
     # Find the most recent snapshot for --link-dest (hard link unchanged files)
     LATEST=$(ls -1d "$DEST_DIR"/????-??-??_* 2>/dev/null | tail -1 || true)
