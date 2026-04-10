@@ -42,6 +42,13 @@ modules/
     karabiner/                        Caps→Escape/Hyper key mapping
     sketchybar/                       Menu bar with AeroSpace workspace indicators
 
+  server/                             ** NixOS home server modules (carbon) **
+    power/                            Always-on laptop: lid ignore, disable suspend, 80% battery cap (replaces misc/tlp)
+    media/                            Jellyfin + *arr suite (Sonarr, Radarr, Lidarr, Prowlarr) with shared media group
+    nginx/                            Reverse proxy: *.carbon subdomains for all services
+    monitoring/                       Prometheus (node exporter) + Grafana with auto-provisioned datasource
+    owntracks/                        OwnTracks Recorder — GPS location tracking (HTTP mode, no MQTT)
+
   desktop/                            NixOS desktop environments (Hyprland, i3, GNOME)
   hardware/                           NixOS hardware (GPU drivers, drive mounts)
   programs/                           NixOS program modules (browsers, editors, media, misc)
@@ -112,5 +119,6 @@ flake.nix
   └── nixosConfigurations.carbon
         ├── hosts/carbon/configuration.nix → hosts/common.nix
         ├── modules/home/*           (shared: fish, git, ghostty, cli, tmux, etc.)
+        ├── modules/server/*         (power, media, monitoring, owntracks, samba)
         └── modules/{desktop,hardware,programs}/* (NixOS-only)
 ```

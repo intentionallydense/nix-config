@@ -33,7 +33,12 @@
     # ../../modules/programs/media/thunderbird
     # ../../modules/programs/media/obs-studio
     # ../../modules/programs/media/mpv
-    ../../modules/programs/misc/tlp
+    ../../modules/server/power       # Always-on laptop: lid ignore, no suspend, 80% charge cap
+    ../../modules/server/media       # Jellyfin, Sonarr, Radarr, Lidarr, Prowlarr
+    ../../modules/server/monitoring  # Prometheus + Grafana
+    ../../modules/server/owntracks   # Location tracking (OwnTracks Recorder)
+    ../../modules/server/samba       # Network file shares (music, projects)
+    ../../modules/server/sunshine    # Remote desktop streaming (Moonlight client)
     ../../modules/programs/misc/thunar
     ../../modules/programs/misc/lact # GPU fan, clock and power configuration
     ../../modules/programs/misc/nix-ld
@@ -78,6 +83,10 @@
     ffmpeg        # webcam capture
     sox           # audio (play notification sounds)
     libnotify     # desktop notifications
+
+    # Publishing pipeline — image resizing for publish.py
+    imagemagick
+    obsidian
   ];
 
   networking.hostName = hostname; # Set hostname defined in flake.nix
@@ -98,24 +107,76 @@
 
   networking.firewall.trustedInterfaces = [ "tailscale0" ];
 
-  # Claude wrapper web UI — starts on boot, reachable over Tailscale
+  # LLM Interface web UI — starts on boot, reachable over Tailscale
   systemd.services.claude-wrapper = let
     python = pkgs.python313.withPackages (ps: with ps; [
-      anthropic fastapi uvicorn python-dotenv pydantic
+      anthropic openai fastapi uvicorn python-dotenv pydantic
       websockets feedparser python-multipart pymupdf setuptools
+      google-auth google-auth-oauthlib google-api-python-client
     ]);
   in {
-    description = "Claude Wrapper web UI";
+    description = "LLM Interface web UI";
     after = [ "network.target" "tailscaled.service" ];
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       Type = "simple";
       User = username;
       WorkingDirectory = "/home/${username}/claude-wrapper/claudepilled";
-      ExecStart = "${python}/bin/python -m claude_wrapper.server";
+      ExecStart = "${python}/bin/python -m llm_interface.server";
       Restart = "on-failure";
       RestartSec = 5;
-      Environment = "PYTHONPATH=/home/${username}/claude-wrapper/claudepilled";
+      Environment = "PYTHONPATH=/home/${username}/claude-wrapper/claudepilled:/home/${username}/briefing";
+    };
+  };
+
+  # Overnight research — processes research-queue.md via claude CLI at 2am daily
+  systemd.services.overnight-research = {
+    description = "Overnight research runner for magnesium vault";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      User = username;
+      ExecStart = "/home/${username}/.local/bin/overnight-research";
+      Environment = [
+        "HOME=/home/${username}"
+        "PATH=/home/${username}/.local/bin:/run/current-system/sw/bin:/usr/bin:/bin"
+      ];
+      # Long-running (processes multiple questions up to stop-hour)
+      TimeoutStartSec = "6h";
+    };
+  };
+  systemd.timers.overnight-research = {
+    description = "Run overnight research at 2am daily";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "*-*-* 02:00:00";
+      Persistent = true;  # catch up if machine was off at 2am
+    };
+  };
+
+  # Publish pipeline — syncs Obsidian vault notes to Jekyll blog, every 30 min
+  systemd.services.publish-blog = {
+    description = "Publish Obsidian notes to intentionallydense Jekyll blog";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      User = username;
+      WorkingDirectory = "/home/${username}/intentionallydense.github.io";
+      ExecStart = "${pkgs.python3}/bin/python3 publish.py --go --push";
+      Environment = [
+        "HOME=/home/${username}"
+        "PATH=/run/current-system/sw/bin:/usr/bin:/bin"
+      ];
+    };
+  };
+  systemd.timers.publish-blog = {
+    description = "Publish blog every 30 minutes";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "*-*-* *:00,30:00";
+      Persistent = true;
     };
   };
 
