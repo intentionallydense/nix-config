@@ -12,4 +12,9 @@
 
   # Sunshine needs access to input devices for remote keyboard/mouse
   users.users.${username}.extraGroups = [ "input" ];
+
+  # Grant input group access to uinput so Sunshine can create virtual input devices
+  services.udev.extraRules = ''
+    KERNEL=="uinput", SUBSYSTEM=="misc", TAG+="uaccess", OPTIONS+="static_node=uinput", GROUP="input", MODE="0660"
+  '';
 }
