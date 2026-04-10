@@ -175,6 +175,7 @@
             update-input = "nix flake update $argv";
             sysup = "sudo nixos-rebuild switch --flake ~/NixOS# --upgrade-all --show-trace";
             rebuild = "sudo nixos-rebuild switch --flake ~/NixOS# --show-trace";
+            nrs = "git -C ~/NixOS pull origin main && sudo nixos-rebuild switch --flake ~/NixOS# --show-trace";
             dots = "cd ~/NixOS/";
             games = "cd /mnt/games/";
             work = "cd /mnt/work/";
