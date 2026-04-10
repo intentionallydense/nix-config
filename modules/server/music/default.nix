@@ -41,9 +41,16 @@ in
   users.users.navidrome.extraGroups = [ "media" ];
   users.users.slskd.extraGroups = [ "media" ];
 
-  # The upstream navidrome module sets ProtectHome=yes, which hides /home entirely
-  # and breaks the BindReadOnlyPaths it sets for MusicFolder. Override to allow access.
+  # Both upstream modules set ProtectHome=yes, which hides /home entirely
+  # and breaks access to music dirs. Override to allow access.
   systemd.services.navidrome.serviceConfig.ProtectHome = pkgs.lib.mkForce false;
+  systemd.services.slskd.serviceConfig.ProtectHome = pkgs.lib.mkForce false;
+
+  # Ensure home dir is traversable by media group services (navidrome, slskd).
+  # Without o+x, services can't reach music_library/ even with correct group perms.
+  systemd.tmpfiles.rules = [
+    "d /home/${username} 0701 ${username} users -"
+  ];
 
   # --- slskd: headless Soulseek client ---
   # Web UI at :5030, downloads to incoming/, shares library/ back to the network.
