@@ -8,6 +8,7 @@
   editor,
   terminal,
   terminalFileManager,
+  vaultName,
   ...
 }:
 {
@@ -150,7 +151,7 @@
 
   # Overnight research — processes research-queue.md via claude CLI at 2am daily
   systemd.services.overnight-research = {
-    description = "Overnight research runner for magnesium vault";
+    description = "Overnight research runner for ${vaultName} vault";
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
     serviceConfig = {
@@ -187,6 +188,7 @@
       Environment = [
         "HOME=/home/${username}"
         "PATH=/run/current-system/sw/bin:/usr/bin:/bin"
+        "OBSIDIAN_VAULT=/home/${username}/Documents/Obsidian/${vaultName}"
       ];
     };
   };

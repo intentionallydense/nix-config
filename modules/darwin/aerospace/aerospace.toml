@@ -138,7 +138,6 @@ cmd-shift-p = 'exec-and-forget ~/.config/aerospace/scripts/project-picker.sh'
 cmd-shift-a = 'exec-and-forget ~/.config/aerospace/scripts/session-switcher.sh'
 cmd-shift-b = 'exec-and-forget ~/.config/aerospace/scripts/claude-session-picker.sh'
 cmd-shift-o = 'exec-and-forget ~/.config/aerospace/scripts/scratchpad.sh'
-cmd-shift-y = 'exec-and-forget ~/.config/aerospace/scripts/publish.sh'
 
 # -- Resize mode --
 cmd-shift-g = 'mode resize'

@@ -88,6 +88,7 @@
         browser = "firefox";
         terminal = "ghostty";
         terminalFileManager = "yazi";
+        vaultName = "calcium";
       };
 
       # --- NixOS (carbon) ---
@@ -106,6 +107,7 @@
         kbdLayout = "gb";
         kbdVariant = "extd";
         consoleKeymap = "uk";
+        vaultName = "magnesium";
       };
 
       systems = [
@@ -132,6 +134,7 @@
             username = siliconUsername;
             hostname = siliconHostname;
             terminalFileManager = "yazi";
+            vaultName = "calcium";
           };
           modules = [
             ./hosts/silicon
