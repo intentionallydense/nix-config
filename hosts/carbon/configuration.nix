@@ -99,7 +99,7 @@
   sops = {
     defaultSopsFile = ../../secrets/secrets.yaml;
     age.sshKeyPaths = [ "/home/${username}/.ssh/id_ed25519" ];
-    secrets.grafana_secret_key = { };
+    secrets.grafana_secret_key = { owner = "grafana"; };
     secrets.navidrome_user = { };
     secrets.navidrome_pass = { };
     secrets.slskd_api_key = { };
@@ -167,11 +167,11 @@
     };
   };
   systemd.timers.overnight-research = {
-    description = "Run overnight research at 2am daily";
+    description = "Run overnight research at 4am daily";
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      OnCalendar = "*-*-* 02:00:00";
-      Persistent = true;  # catch up if machine was off at 2am
+      OnCalendar = "*-*-* 04:00:00";
+      Persistent = true;  # catch up if machine was off at 4am
     };
   };
 
