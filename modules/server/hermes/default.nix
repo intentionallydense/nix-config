@@ -36,7 +36,7 @@ let
     model = {
       # DeepSeek uses an OpenAI-compatible endpoint.
       # Swap provider/base_url here to change LLM providers — one place.
-      default = "deepseek/deepseek-chat";
+      default = "moonshotai/kimi-k2.5";
       provider = "openrouter";
       # api_key is injected via OPENROUTER_API_KEY in the env file.
     };
