@@ -76,7 +76,7 @@
     mullvad-vpn
     zotero
     # obsidian
-    # taskwarrior
+    taskwarrior3
     # gcalcli
     python3
     curl
@@ -146,6 +146,20 @@
       Restart = "on-failure";
       RestartSec = 5;
       Environment = "PYTHONPATH=/home/${username}/claude-wrapper/claudepilled:/home/${username}/briefing";
+    };
+  };
+
+  # TaskChampion sync server — enables Taskwarrior sync with TaskChamp (iOS)
+  systemd.services.taskchampion-sync-server = {
+    description = "TaskChampion sync server";
+    after = [ "network.target" "tailscaled.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "simple";
+      User = username;
+      ExecStart = "${pkgs.taskchampion-sync-server}/bin/taskchampion-sync-server --listen 0.0.0.0:9743 --data-dir /home/${username}/.local/share/taskchampion-sync-server";
+      Restart = "on-failure";
+      RestartSec = 5;
     };
   };
 
