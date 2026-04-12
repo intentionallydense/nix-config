@@ -50,6 +50,7 @@ modules/
     monitoring/                       Prometheus (node exporter) + Grafana with auto-provisioned datasource
     backup/                           Weekly + monthly rsync backups to external SanDisk 2TB (--link-dest incremental)
     owntracks/                        OwnTracks Recorder — GPS location tracking (HTTP mode, no MQTT)
+    hermes/                           Hermes Agent (Nous Research): read-only personal assistant in a hardened podman container
 
   desktop/                            NixOS desktop environments (Hyprland, i3, GNOME)
   hardware/                           NixOS hardware (GPU drivers, drive mounts)
@@ -103,6 +104,10 @@ secrets/                              sops-encrypted secrets (silicon)
   auto-start each tunnel on login. Currently silicon-only (needs sops key per host).
 - **Three hosts coexist**: silicon (Intel Mac, fish), germanium (ARM Mac, fish),
   carbon (NixOS, Hyprland, fish). All import modules/home/; Macs also import home/default.nix.
+- **Hermes egress filtering**: Uses a dedicated `inet hermes` nftables table (not the main
+  `inet filter`) so it doesn't interfere with carbon's existing `networking.firewall` rules.
+  IP whitelist is populated at boot by a resolve service; if CDN IPs rotate, the container
+  fails loud rather than reaching unvetted addresses.
 
 ## Data flow
 
@@ -126,6 +131,6 @@ flake.nix
   └── nixosConfigurations.carbon
         ├── hosts/carbon/configuration.nix → hosts/common.nix
         ├── modules/home/*           (shared: fish, git, ghostty, cli, tmux, etc.)
-        ├── modules/server/*         (power, media, monitoring, owntracks, samba, backup)
+        ├── modules/server/*         (power, media, monitoring, owntracks, samba, backup, hermes)
         └── modules/{desktop,hardware,programs}/* (NixOS-only)
 ```
