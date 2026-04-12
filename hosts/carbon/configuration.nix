@@ -43,7 +43,6 @@
     ../../modules/server/samba       # Network file shares (music, projects)
     ../../modules/server/backup      # Weekly + monthly rsync backups to external SanDisk 2TB
     ../../modules/server/sunshine    # Remote desktop streaming (Moonlight client)
-    ../../modules/server/hermes      # Hermes Agent — read-only personal assistant
     ../../modules/programs/misc/thunar
     ../../modules/programs/misc/lact # GPU fan, clock and power configuration
     ../../modules/programs/misc/nix-ld
@@ -108,17 +107,6 @@
     secrets.slskd_slsk_password = { };
     secrets.slskd_web_username = { };
     secrets.slskd_web_password = { };
-    secrets.deepseek_hermes_api_key = {};
-    secrets.deepseek_hermes_telegram_key = {};
-    secrets.deepseek_hermes_tavily_key = {};
-  };
-
-  services.hermes = {
-    enable = true;
-    telegramChatId = 93372553;
-    readOnlyMounts = [
-      { source = "/home/fluoride/Documents"; dest = "/mnt/docs"; }
-    ];
   };
 
   networking.hostName = hostname; # Set hostname defined in flake.nix
