@@ -302,6 +302,7 @@ in {
     egressDomains = mkOption {
       type = types.listOf types.str;
       default = [
+        "openrouter.ai"
         "api.deepseek.com"
         "api.telegram.org"
         "api.tavily.com"
@@ -359,7 +360,7 @@ in {
     # Decrypts hermes_* keys from secrets.yaml and assembles an env file
     # that podman injects into the container at startup.
     # The secrets must exist in your sops.defaultSopsFile (secrets/secrets.yaml).
-    sops.secrets.deepseek_hermes_openrouter_key = {};
+    sops.secrets.deepseek_hermes_api_key = {};
     sops.secrets.deepseek_hermes_telegram_key = {};
     sops.secrets.deepseek_hermes_tavily_key = {};
 
@@ -367,7 +368,7 @@ in {
     # Uses sops-nix templates to interpolate multiple secrets into one file.
     sops.templates."hermes.env" = {
       content = ''
-        OPENROUTER_API_KEY=${config.sops.placeholder.deepseek_hermes_openrouter_key}
+        OPENROUTER_API_KEY=${config.sops.placeholder.deepseek_hermes_api_key}
         TELEGRAM_BOT_TOKEN=${config.sops.placeholder.deepseek_hermes_telegram_key}
         TAVILY_API_KEY=${config.sops.placeholder.deepseek_hermes_tavily_key}
       '';

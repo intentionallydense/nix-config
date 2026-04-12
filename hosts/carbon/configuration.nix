@@ -108,7 +108,7 @@
     secrets.slskd_slsk_password = { };
     secrets.slskd_web_username = { };
     secrets.slskd_web_password = { };
-    secrets.deepseek_hermes_openrouter_key = {};
+    secrets.deepseek_hermes_api_key = {};
     secrets.deepseek_hermes_telegram_key = {};
     secrets.deepseek_hermes_tavily_key = {};
   };
