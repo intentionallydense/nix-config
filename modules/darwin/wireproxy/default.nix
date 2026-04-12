@@ -97,9 +97,47 @@ in
       {
         home.packages = [ pkgs.wireproxy ];
 
-        # PAC file for the "personal" Firefox profile — routes Tailscale/local
-        # traffic directly, everything else through the Mullvad SOCKS5 proxy.
-        xdg.configFile."firefox-pac/personal.pac".source = ./personal.pac;
+        # PAC files for Firefox profiles that need Tailscale access.
+        # Routes Tailscale/local traffic directly; everything else through
+        # the profile's Mullvad SOCKS5 proxy.
+        xdg.configFile = lib.genAttrs
+          [ "firefox-pac/personal.pac" "firefox-pac/academic.pac" ]
+          (path:
+            let
+              name = lib.removeSuffix ".pac" (lib.removePrefix "firefox-pac/" path);
+              port = toString tunnels.${name}.port;
+            in
+            {
+              text = ''
+                // PAC file for the "${name}" Firefox profile.
+                // Routes Tailscale traffic directly; everything else through Mullvad SOCKS5.
+
+                function FindProxyForURL(url, host) {
+                    // Tailscale IPs (100.64.0.0/10)
+                    if (isInNet(host, "100.64.0.0", "255.192.0.0")) {
+                        return "DIRECT";
+                    }
+
+                    // Tailscale MagicDNS
+                    if (shExpMatch(host, "*.ts.net")) {
+                        return "DIRECT";
+                    }
+
+                    // Localhost and private networks
+                    if (isPlainHostName(host) ||
+                        host === "localhost" ||
+                        host === "127.0.0.1" ||
+                        isInNet(host, "10.0.0.0", "255.0.0.0") ||
+                        isInNet(host, "172.16.0.0", "255.240.0.0") ||
+                        isInNet(host, "192.168.0.0", "255.255.0.0")) {
+                        return "DIRECT";
+                    }
+
+                    // Everything else through Mullvad
+                    return "SOCKS5 127.0.0.1:${port}";
+                }
+              '';
+            });
 
         # sops secrets — one WireGuard private key per tunnel.
         sops.secrets = lib.mapAttrs' (name: _: lib.nameValuePair "wireproxy/${name}" { }) tunnels;
