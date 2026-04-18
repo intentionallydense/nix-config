@@ -61,6 +61,7 @@
 
   # Define system packages here
   environment.systemPackages = with pkgs; [
+    mosh
     vim
     wget
     waybar
@@ -126,6 +127,7 @@
   };
 
   networking.firewall.trustedInterfaces = [ "tailscale0" ];
+  networking.firewall.allowedUDPPortRanges = [ { from = 60000; to = 61000; } ]; # mosh
 
   # LLM Interface web UI — starts on boot, reachable over Tailscale
   systemd.services.claude-wrapper = let
