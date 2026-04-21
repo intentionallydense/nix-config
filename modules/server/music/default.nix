@@ -67,6 +67,14 @@ in
     SLSKD_URL=http://localhost:5030
     SLSKD_API_KEY=${config.sops.placeholder.slskd_api_key}
   '';
+  sops.templates."mp3-sync-env" = {
+    content = ''
+      NAVIDROME_URL=http://localhost:4533
+      NAVIDROME_USER=${config.sops.placeholder.navidrome_user}
+      NAVIDROME_PASS=${config.sops.placeholder.navidrome_pass}
+    '';
+    owner = username;  # mp3-sync.service runs as fluoride
+  };
 
   # --- slskd: headless Soulseek client ---
   # Web UI at :5030, downloads to incoming/, shares library/ back to the network.
@@ -93,6 +101,7 @@ in
     pkgs.beets
     pkgs.ffmpeg
     pkgs.chromaprint  # AcoustID fingerprinting (fpcalc)
+    pkgs.libnotify    # notify-send, used by mp3-sync for desktop notifications
     musicPython
   ];
 
@@ -172,4 +181,71 @@ in
 
   # Open music-shelf port in firewall (Tailscale-gated like everything else)
   networking.firewall.allowedTCPPorts = [ 4534 ];
+
+  # --- mp3-sync: sync curated music subset to Fiio Echo Mini on plug-in ---
+  # Selection: starred albums ∪ albums-in-Navidrome-playlist "echo".
+  # Trigger: udev matches the SD card (FS UUID 6645-DD6E) when it appears,
+  # which fires mp3-sync.service. The device itself is 071b:3203 (ROCK MP3).
+  # Failures: layer 1 = notify-send from the script; layer 2 = status JSON at
+  # ~/.local/state/mp3-sync/last-status.json; layer 3 = OnFailure helper below
+  # catches crashes before the script writes its own status.
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="block", ENV{ID_FS_UUID}=="6645-DD6E", TAG+="systemd", ENV{SYSTEMD_WANTS}+="mp3-sync.service"
+  '';
+
+  systemd.services.mp3-sync = {
+    description = "Sync curated music to Fiio Echo Mini SD card";
+    # Block device might still be settling when udev fires — the script waits
+    # for the mount itself, but give the filesystem a beat.
+    after = [ "local-fs.target" ];
+    onFailure = [ "mp3-sync-failure.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      User = username;
+      ExecStart = "${scriptsDir}/mp3-sync";
+      EnvironmentFile = config.sops.templates."mp3-sync-env".path;
+      Environment = [
+        "HOME=/home/${username}"
+        "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/${username}/bin"
+        # Needed so notify-send and udisksctl find the user session bus
+        "XDG_RUNTIME_DIR=/run/user/1000"
+        "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus"
+      ];
+      TimeoutStartSec = "30min";  # first sync may copy gigabytes
+    };
+  };
+
+  # Fallback failure handler — only fires if mp3-sync.service exits non-zero
+  # *before* the script itself wrote a status (hard crash / OOM / exec error).
+  # The script's own fail() handles normal error paths.
+  systemd.services.mp3-sync-failure = {
+    description = "Record mp3-sync systemd-level failure";
+    serviceConfig = {
+      Type = "oneshot";
+      User = username;
+      Environment = [
+        "HOME=/home/${username}"
+        "PATH=/run/current-system/sw/bin"
+        "XDG_RUNTIME_DIR=/run/user/1000"
+        "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus"
+      ];
+      ExecStart = pkgs.writeShellScript "mp3-sync-failure" ''
+        set -u
+        STATEDIR="$HOME/.local/state/mp3-sync"
+        mkdir -p "$STATEDIR"
+        # Don't clobber a status the script already wrote — only backstop when
+        # the script crashed before writing anything recent (>60s stale).
+        if [ -f "$STATEDIR/last-status.json" ] && \
+           [ $(( $(date +%s) - $(stat -c %Y "$STATEDIR/last-status.json") )) -lt 60 ]; then
+          exit 0
+        fi
+        cat > "$STATEDIR/last-status.json" <<EOF
+        {"status":"systemd_failure","timestamp":"$(date -Iseconds)","error":"mp3-sync.service exited non-zero; see: journalctl -u mp3-sync"}
+        EOF
+        ${pkgs.libnotify}/bin/notify-send -u critical -a mp3-sync \
+          "Echo Mini sync FAILED" \
+          "Service crashed — journalctl -u mp3-sync" || true
+      '';
+    };
+  };
 }
