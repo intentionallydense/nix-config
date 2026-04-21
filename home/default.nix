@@ -22,7 +22,7 @@
 
   # --- Fish (macOS extensions) ---
   # Base fish config (aliases, greeting) is in modules/home/fish.
-  # This adds mac-specific interactive init (dev toolchains, conda, etc.).
+  # This adds mac-specific interactive init (ghcup, juliaup, opam, antigravity).
   programs.fish.interactiveShellInit = ''
     # ghcup (Haskell) — ghcup env is bash-only, add paths manually
     if test -d "$HOME/.ghcup/bin"
@@ -38,26 +38,7 @@
       eval (opam env --shell=fish 2>/dev/null)
     end
 
-    # conda / mamba
-    if test -f "$HOME/miniforge3/bin/conda"
-      eval "$HOME/miniforge3/bin/conda" "shell.fish" "hook" $argv | source
-    end
-    if test -f "$HOME/miniforge3/bin/mamba"
-      set -gx MAMBA_EXE "$HOME/miniforge3/bin/mamba"
-      set -gx MAMBA_ROOT_PREFIX "$HOME/miniforge3"
-      "$MAMBA_EXE" shell hook --shell fish --root-prefix "$MAMBA_ROOT_PREFIX" | source
-    end
-
-    # ccm — auto-activate conda env when cd'ing into a project with .conda-env
-    function _ccm_conda_auto --on-variable PWD
-      if test -f .conda-env
-        set -l env_name (string trim < .conda-env)
-        if test "$CONDA_DEFAULT_ENV" != "$env_name"
-          conda activate $env_name
-        end
-      end
-    end
-    _ccm_conda_auto  # run once for initial directory
+    # conda / mamba / ccm are now in the shared fish module (modules/home/fish).
 
     # Antigravity
     if test -d "$HOME/.antigravity/antigravity/bin"

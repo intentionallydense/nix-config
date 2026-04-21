@@ -135,6 +135,32 @@
               tmux select-window -t "$session_name:editor"
               tmux attach-session -t "=$session_name"
             end
+
+            # conda — check miniconda3 (carbon) then miniforge3 (macOS)
+            for conda_root in "$HOME/miniconda3" "$HOME/miniforge3"
+              if test -f "$conda_root/bin/conda"
+                eval "$conda_root/bin/conda" "shell.fish" "hook" $argv | source
+                break
+              end
+            end
+
+            # mamba — miniforge3 ships it; miniconda3 doesn't
+            if test -f "$HOME/miniforge3/bin/mamba"
+              set -gx MAMBA_EXE "$HOME/miniforge3/bin/mamba"
+              set -gx MAMBA_ROOT_PREFIX "$HOME/miniforge3"
+              "$MAMBA_EXE" shell hook --shell fish --root-prefix "$MAMBA_ROOT_PREFIX" | source
+            end
+
+            # ccm — auto-activate conda env when cd'ing into a project with .conda-env
+            function _ccm_conda_auto --on-variable PWD
+              if test -f .conda-env
+                set -l env_name (string trim < .conda-env)
+                if test "$CONDA_DEFAULT_ENV" != "$env_name"
+                  conda activate $env_name
+                end
+              end
+            end
+            _ccm_conda_auto  # run once for initial directory
           '';
 
           shellAbbrs = {
