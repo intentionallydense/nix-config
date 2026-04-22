@@ -129,14 +129,10 @@
   networking.firewall.trustedInterfaces = [ "tailscale0" ];
   networking.firewall.allowedUDPPortRanges = [ { from = 60000; to = 61000; } ]; # mosh
 
-  # LLM Interface web UI — starts on boot, reachable over Tailscale
-  systemd.services.claude-wrapper = let
-    python = pkgs.python313.withPackages (ps: with ps; [
-      anthropic openai fastapi uvicorn python-dotenv pydantic
-      websockets feedparser python-multipart pymupdf setuptools
-      google-auth google-auth-oauthlib google-api-python-client
-    ]);
-  in {
+  # LLM Interface web UI — starts on boot, reachable over Tailscale.
+  # Uses the claude-ai conda env rather than a nix-managed Python so the
+  # service matches the environment used for local development.
+  systemd.services.claude-wrapper = {
     description = "LLM Interface web UI";
     after = [ "network.target" "tailscaled.service" ];
     wantedBy = [ "multi-user.target" ];
@@ -144,7 +140,7 @@
       Type = "simple";
       User = username;
       WorkingDirectory = "/home/${username}/claude-wrapper/claudepilled";
-      ExecStart = "${python}/bin/python -m llm_interface.server";
+      ExecStart = "/home/${username}/miniconda3/envs/claude-ai/bin/python -m llm_interface.server";
       Restart = "on-failure";
       RestartSec = 5;
       Environment = "PYTHONPATH=/home/${username}/claude-wrapper/claudepilled:/home/${username}/briefing";
