@@ -22,11 +22,14 @@
   services.tlp = {
     enable = true;
     settings = {
-      # CPU: full performance on AC (server is always plugged in)
-      CPU_SCALING_GOVERNOR_ON_AC = "performance";
+      # CPU: "powersave" governor with intel_pstate active mode + HWP means
+      # "let hardware-managed P-states decide based on EPP hints" — boosts fast
+      # under real load, drops idle temps dramatically. The EPP below does the
+      # actual tuning. Previous "performance" setting pegged cores at 98°C.
+      CPU_SCALING_GOVERNOR_ON_AC = "powersave";
       CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
 
-      CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
+      CPU_ENERGY_PERF_POLICY_ON_AC = "balance_performance";
       CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
 
       CPU_MIN_PERF_ON_AC = 0;
@@ -42,4 +45,11 @@
       STOP_CHARGE_THRESH_BAT1 = 80;
     };
   };
+
+  # Dell platform profile: "performance" causes the firmware to pin the fan
+  # at max and refuse to release manual fan control. "balanced" lets the EC
+  # ramp the fan based on temp. Choices: cool, quiet, balanced, performance.
+  systemd.tmpfiles.rules = [
+    "w /sys/firmware/acpi/platform_profile - - - - balanced"
+  ];
 }
