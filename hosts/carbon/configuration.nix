@@ -29,6 +29,8 @@
     ../../modules/programs/browser/${browser} # Set browser defined in flake.nix
     ../../modules/programs/editor/${editor} # Set editor defined in flake.nix
     ../../modules/programs/shell/bash # NixOS system-level bash config
+    ../../modules/programs/secrets   # sops-encrypted API keys → fish env vars
+    ../../modules/programs/kimi-claude-proxy  # Kimi For Coding ↔ Claude Code proxy (user systemd service on :8787)
     # ../../modules/programs/media/discord
     # ../../modules/programs/media/spicetify
     # ../../modules/programs/media/youtube-music
