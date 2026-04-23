@@ -24,6 +24,12 @@
 
   users.users.${username} = {
     isNormalUser = true;
+    # 0710 (not the default 0700) preserves a group --x bit on /home/fluoride.
+    # POSIX ACL aliases the group perm to the mask, so 0700 wipes the ACL mask
+    # to --- on every nixos-rebuild (update-users-groups.pl chmods homeMode),
+    # which zeroes out the `user:slskd:--x` / `user:navidrome:--x` entries and
+    # breaks slskd downloads and navidrome access into ~/music_library.
+    homeMode = "0710";
     extraGroups = [
       "networkmanager"
       "wheel"

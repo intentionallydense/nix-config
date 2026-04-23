@@ -46,10 +46,15 @@ in
   systemd.services.navidrome.serviceConfig.ProtectHome = pkgs.lib.mkForce false;
   systemd.services.slskd.serviceConfig.ProtectHome = pkgs.lib.mkForce false;
 
-  # Ensure home dir is traversable by media group services (navidrome, slskd).
-  # Without o+x, services can't reach music_library/ even with correct group perms.
+  # Ensure home dir is traversable by named-user ACL entries (navidrome, slskd).
+  # Mode 0710 (not 0701!) is critical: POSIX ACL aliases the group perm to the
+  # mask, and the mask AND's named-user entries. Mode 0701 would give mask=---,
+  # killing `user:slskd:--x` / `user:navidrome:--x` → services can't traverse.
+  # 0710 gives mask=--x which preserves those entries. Pairs with homeMode="0710"
+  # in hosts/common.nix, which fixes the same problem on the update-users-groups
+  # activation path.
   systemd.tmpfiles.rules = [
-    "d /home/${username} 0701 ${username} users -"
+    "d /home/${username} 0710 ${username} users -"
   ];
 
   # --- sops templates: compose secrets into env files for services ---
@@ -126,6 +131,8 @@ in
 
   # --- Auto-import: polls incoming/ every 15 minutes ---
   # Runs music-import when new downloads land. Handles the convert → quality gate → beet import pipeline.
+  # EnvironmentFile=mp3-sync-env gives music-import the NAVIDROME_URL/USER/PASS
+  # it needs to auto-star freshly-imported albums via star-new-albums.
   systemd.services.music-auto-import = {
     description = "Auto-import music from incoming/ to library/";
     serviceConfig = {
@@ -136,6 +143,7 @@ in
         "HOME=/home/${username}"
         "PATH=/run/current-system/sw/bin"
       ];
+      EnvironmentFile = config.sops.templates."mp3-sync-env".path;
     };
   };
   systemd.timers.music-auto-import = {
@@ -165,7 +173,12 @@ in
         "HOME=/home/${username}"
         "PATH=/run/current-system/sw/bin"
       ];
-      EnvironmentFile = config.sops.templates."slskd-env".path;
+      # slskd-env: SLSKD_API_KEY for search/download.
+      # mp3-sync-env: NAVIDROME creds for the music-import star-new-albums step.
+      EnvironmentFile = [
+        config.sops.templates."slskd-env".path
+        config.sops.templates."mp3-sync-env".path
+      ];
       # Generous timeout — slskd searches + downloads can take a while
       TimeoutStartSec = "45min";
     };
@@ -184,13 +197,16 @@ in
 
   # --- mp3-sync: sync curated music subset to Fiio Echo Mini on plug-in ---
   # Selection: starred albums ∪ albums-in-Navidrome-playlist "echo".
-  # Trigger: udev matches the SD card (FS UUID 6645-DD6E) when it appears,
-  # which fires mp3-sync.service. The device itself is 071b:3203 (ROCK MP3).
+  # Trigger: udev matches the 30GB SD card inside the Echo Mini (FS UUID
+  # 36F9-1807, label "NO NAME") when it appears, which fires mp3-sync.service.
+  # The Echo Mini also exposes a 7GB internal flash (UUID 6645-DD6E, label
+  # "ECHO MINI") — we intentionally ignore that one: too small for a growing
+  # curated set. The device itself is 071b:3203 (ROCK MP3).
   # Failures: layer 1 = notify-send from the script; layer 2 = status JSON at
   # ~/.local/state/mp3-sync/last-status.json; layer 3 = OnFailure helper below
   # catches crashes before the script writes its own status.
   services.udev.extraRules = ''
-    ACTION=="add", SUBSYSTEM=="block", ENV{ID_FS_UUID}=="6645-DD6E", TAG+="systemd", ENV{SYSTEMD_WANTS}+="mp3-sync.service"
+    ACTION=="add", SUBSYSTEM=="block", ENV{ID_FS_UUID}=="36F9-1807", TAG+="systemd", ENV{SYSTEMD_WANTS}+="mp3-sync.service"
   '';
 
   systemd.services.mp3-sync = {
