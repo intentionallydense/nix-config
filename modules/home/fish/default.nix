@@ -41,6 +41,12 @@
             set -gx XMONAD_DATA_DIR (test -n "$XDG_DATA_HOME" && echo "$XDG_DATA_HOME" || echo "$HOME/.local/share")/xmonad
             set -gx XMONAD_CACHE_DIR (test -n "$XDG_CACHE_HOME" && echo "$XDG_CACHE_HOME" || echo "$HOME/.cache")/xmonad
             set -gx templates "${self}/dev-shells"
+          '' + lib.optionalString pkgs.stdenv.isDarwin ''
+            if test -x /opt/homebrew/bin/brew
+              /opt/homebrew/bin/brew shellenv | source
+            else if test -x /usr/local/bin/brew
+              /usr/local/bin/brew shellenv | source
+            end
           '';
 
           interactiveShellInit = ''
@@ -213,8 +219,8 @@
             dev = "cd /mnt/work/Projects/";
           } // lib.optionalAttrs pkgs.stdenv.isDarwin {
             # macOS-specific aliases
-            rebuild = "sudo darwin-rebuild switch --flake ~/projects/active/nix-config";
-            nrs = "git -C ~/projects/active/nix-config pull origin main && sudo darwin-rebuild switch --flake ~/projects/active/nix-config";
+            rebuild = "sudo darwin-rebuild switch --flake ~/nix-config";
+            nrs = "git -C ~/nix-config pull origin main && sudo darwin-rebuild switch --flake ~/nix-config";
           };
         };
       }
