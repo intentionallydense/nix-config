@@ -116,7 +116,7 @@ cmd-shift-v = 'exec-and-forget /Applications/Firefox.app/Contents/MacOS/firefox 
 cmd-shift-space = 'exec-and-forget ~/.config/aerospace/scripts/app-launcher.sh'
 cmd-shift-d = "exec-and-forget /usr/bin/open -na Ghostty --args -e /bin/bash -lc btop; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
 cmd-shift-i = "exec-and-forget /usr/bin/open -na Ghostty --args -e /bin/bash -lc ~/.config/aerospace/scripts/keybinds.sh; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
-cmd-shift-u = "exec-and-forget /usr/bin/open -na Ghostty --args -e /bin/bash -lc 'sudo darwin-rebuild switch --flake ~/projects/active/nix-config#silicon'; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
+cmd-shift-u = "exec-and-forget /usr/bin/open -na Ghostty --args -e /bin/bash -lc 'sudo darwin-rebuild switch --flake ~/nix-config#germanium'; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
 
 # -- Relative workspace navigation --
 cmd-shift-left = 'workspace prev --wrap-around'

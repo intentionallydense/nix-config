@@ -85,9 +85,11 @@
   programs.direnv.package = pkgs-stable.direnv;
 
   # --- sops-nix ---
-  # Secrets are decrypted at activation time using the SSH ed25519 key.
+  # Secrets are decrypted at activation time using the SSH ed25519 key
+  # and the age key imported from silicon.
   sops = {
     defaultSopsFile = ../secrets/secrets.yaml;
     age.sshKeyPaths = [ "${config.home.homeDirectory}/.ssh/id_ed25519" ];
+    age.keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
   };
 }

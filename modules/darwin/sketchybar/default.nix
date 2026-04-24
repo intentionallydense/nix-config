@@ -1,5 +1,5 @@
 # SketchyBar — macOS menu bar replacement for AeroSpace workspace visualization.
-# Catppuccin Mocha themed. Shows workspace indicators + clock.
+# Catppuccin Mocha themed. Shows workspace indicators, front app, battery, clock.
 # Used by: hosts/silicon/default.nix, hosts/germanium/configuration.nix
 { ... }:
 {
@@ -13,9 +13,9 @@
         source = ./sketchybarrc;
         executable = true;
       };
-      xdg.configFile."sketchybar/plugins/aerospace.sh" = {
-        source = ./plugins/aerospace.sh;
-        executable = true;
+      xdg.configFile."sketchybar/plugins" = {
+        source = ./plugins;
+        recursive = true;
       };
     })
   ];

@@ -14,6 +14,7 @@
     ../../modules/darwin/aerospace
     ../../modules/darwin/karabiner
     ../../modules/darwin/sketchybar
+    ../../modules/darwin/wireproxy # Mullvad WireGuard SOCKS5 proxies for Firefox profiles
     ../../modules/programs/kimi-claude-proxy/darwin.nix  # Kimi For Coding ↔ Claude Code proxy (launchd user agent on :8787)
   ];
 
@@ -109,9 +110,7 @@
       "zotero"
 
       # Media
-      "spotify"
       "vlc"
-      "krita"
       "musicbrainz-picard"
       "anki"
 
