@@ -54,9 +54,7 @@ cat <<'EOF'
 ║  PRODUCTIVITY                                                ║
 ║  cmd-shift-p          Project picker (choose → tmux)         ║
 ║  cmd-shift-a          Tmux session switcher (attach)         ║
-║  cmd-shift-b          Claude session picker (browse/resume)  ║
 ║  cmd-shift-o          Quick scratchpad (nvim)                ║
-║  cmd-shift-y          Publish notes to site                  ║
 ║                                                              ║
 ║  cmd-shift-i          This cheatsheet                        ║
 ║                                                              ║

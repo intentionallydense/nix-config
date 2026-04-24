@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# SketchyBar config — AeroSpace workspace indicators, front app, battery,
-# clock. Catppuccin Mocha palette throughout.
+# SketchyBar config — AeroSpace workspace indicators, front app, wifi,
+# battery, volume, clock. Catppuccin Mocha palette throughout.
 
 # -- Catppuccin Mocha --
 BAR_COLOR=0xee1e1e2e       # Base (semi-transparent)
@@ -61,19 +61,30 @@ sketchybar --add item front_app left \
     padding_left=8 \
     script="$CONFIG_DIR/plugins/front_app.sh"
 
-# -- Clock (right) --
+# -- Right side: items added in reverse visual order (right adds from the edge inward) --
+# Visual result: ... | wifi | battery | volume | clock
+
 sketchybar --add item clock right \
   --set clock \
     update_freq=30 \
     label.padding_right=4 \
     script='sketchybar --set $NAME label="$(date "+%a %d %b  %H:%M")"'
 
-# -- Battery (right) --
+sketchybar --add item volume right \
+  --subscribe volume volume_change \
+  --set volume \
+    update_freq=10 \
+    script="$CONFIG_DIR/plugins/volume.sh"
+
 sketchybar --add item battery right \
   --set battery \
     update_freq=60 \
-    padding_right=4 \
     script="$CONFIG_DIR/plugins/battery.sh"
+
+sketchybar --add item wifi right \
+  --set wifi \
+    update_freq=30 \
+    script="$CONFIG_DIR/plugins/wifi.sh"
 
 # -- Init --
 sketchybar --update
