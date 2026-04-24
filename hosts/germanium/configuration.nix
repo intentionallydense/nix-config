@@ -20,6 +20,8 @@
   system.primaryUser = username;
 
   # --- Nix ---
+  # Determinate Nix manages the daemon itself; nix-darwin must not touch it.
+  nix.enable = false;
   nix.settings = {
     experimental-features = [
       "nix-command"
@@ -88,8 +90,6 @@
     casks = [
       # Browsers
       "firefox"
-      "google-chrome"
-      "tor-browser"
 
       # Terminal
       "ghostty"
@@ -102,7 +102,6 @@
       "signal"
       "slack"
       "whatsapp"
-      "zoom"
 
       # Productivity
       "obsidian"
@@ -114,24 +113,18 @@
       "krita"
       "musicbrainz-picard"
       "anki"
-      "foobar2000"
-
-      # Development
-      "pycharm-ce"
-      "rustrover"
 
       # Utilities
       "linearmouse"
       "mullvad-vpn"
       "tailscale"
       "selfcontrol"
-      "balenaetcher"
       "ollama"
       "utm"
       # No virtualbox — no ARM support
 
-      # File sharing
-      "freetube"
+      # Video
+      "yattee"
 
       # Gaming
       "steam"
@@ -181,43 +174,6 @@
 
   # --- Security ---
   security.pam.services.sudo_local.touchIdAuth = true;
-
-  # --- Claude wrapper via launchd ---
-  # Mirror of the systemd service on carbon.
-  launchd.user.agents.claude-wrapper =
-    let
-      python = pkgs.python313.withPackages (
-        ps: with ps; [
-          anthropic
-          fastapi
-          uvicorn
-          python-dotenv
-          pydantic
-          websockets
-          feedparser
-          python-multipart
-          pymupdf
-          setuptools
-        ]
-      );
-    in
-    {
-      serviceConfig = {
-        ProgramArguments = [
-          "${python}/bin/python"
-          "-m"
-          "claude_wrapper.server"
-        ];
-        RunAtLoad = true;
-        KeepAlive = true;
-        WorkingDirectory = "/Users/${username}/claude-wrapper/claudepilled";
-        EnvironmentVariables = {
-          PYTHONPATH = "/Users/${username}/claude-wrapper/claudepilled";
-        };
-        StandardOutPath = "/tmp/claude-wrapper.log";
-        StandardErrorPath = "/tmp/claude-wrapper.err";
-      };
-    };
 
   # --- Shell ---
   programs.fish.enable = true;
