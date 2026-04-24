@@ -206,8 +206,6 @@
             tp = "${pkgs.trash-cli}/bin/trash-put";
             tpr = "${pkgs.trash-cli}/bin/trash-restore";
             grep = "grep --color=always";
-            claudee = "CLAUDE_CODE_NO_FLICKER=1 claude --dangerously-skip-permissions";
-            claudey = "CLAUDE_CODE_NO_FLICKER=1 claude --dangerously-skip-permissions --resume";
           } // lib.optionalAttrs pkgs.stdenv.isLinux {
             # NixOS-specific aliases
             nf = "${pkgs.microfetch}/bin/microfetch";
