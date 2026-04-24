@@ -58,6 +58,7 @@ in
           bind * setw synchronize-panes
           bind P set pane-border-status
           bind -n C-M-c kill-pane
+          bind K confirm-before -p "kill-session #{session_name}? (y/n)" kill-session
           bind x swap-pane -D
           bind z resize-pane -Z
 
