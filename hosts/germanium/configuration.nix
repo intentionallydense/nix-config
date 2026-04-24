@@ -14,6 +14,7 @@
     ../../modules/darwin/aerospace
     ../../modules/darwin/karabiner
     ../../modules/darwin/sketchybar
+    ../../modules/programs/kimi-claude-proxy/darwin.nix  # Kimi For Coding ↔ Claude Code proxy (launchd user agent on :8787)
   ];
 
   # --- Primary user ---

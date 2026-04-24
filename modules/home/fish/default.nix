@@ -21,6 +21,12 @@
           recursive = true;
         };
 
+        # Fish functions (mgchat, etc.). mgkimi ships with kimi-claude-proxy module.
+        xdg.configFile."fish/functions" = {
+          source = ./functions;
+          recursive = true;
+        };
+
         programs.fish = {
           enable = true;
 

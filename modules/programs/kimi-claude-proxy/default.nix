@@ -1,7 +1,8 @@
 # kimi-claude-proxy — bridge Claude Code harness to Kimi For Coding subscription.
 #
-# Wraps ./kimi-claude-proxy.py in a Python env with aiohttp, runs it as a
-# user-level systemd service on port 8787.
+# NixOS entry point: imports common.nix for the package + fish function, and
+# defines the systemd user service. macOS hosts should import ./darwin.nix
+# instead (which wires launchd).
 #
 # Why this exists:
 #   Moonshot's api.kimi.com/coding/v1 is Anthropic-compatible and explicitly
@@ -11,20 +12,10 @@
 #   refreshes the latter. Pointed at via ANTHROPIC_BASE_URL in mgkimi.
 #
 # Used by: hosts/carbon/configuration.nix
-{ config, lib, pkgs, username, ... }:
-
-let
-  pythonEnv = pkgs.python313.withPackages (ps: [ ps.aiohttp ]);
-  proxyBin = pkgs.writeShellScriptBin "kimi-claude-proxy" ''
-    exec ${pythonEnv}/bin/python3 ${./kimi-claude-proxy.py} "$@"
-  '';
-in
+{ kimiClaudeProxyBin, ... }:
 {
-  # Expose the wrapped proxy on PATH (so it can also be invoked manually for debugging)
-  environment.systemPackages = [ proxyBin ];
+  imports = [ ./common.nix ];
 
-  # Run as user-level systemd service so $HOME resolves to the user's home
-  # and credentials reads/writes land in ~/.kimi/credentials/.
   systemd.user.services.kimi-claude-proxy = {
     description = "Kimi For Coding ↔ Claude Code Anthropic-format proxy";
     wantedBy = [ "default.target" ];
@@ -32,7 +23,7 @@ in
     wants = [ "network-online.target" ];
     serviceConfig = {
       Type = "simple";
-      ExecStart = "${proxyBin}/bin/kimi-claude-proxy --port 8787";
+      ExecStart = "${kimiClaudeProxyBin}/bin/kimi-claude-proxy --port 8787";
       Restart = "on-failure";
       RestartSec = 5;
       StandardOutput = "journal";
