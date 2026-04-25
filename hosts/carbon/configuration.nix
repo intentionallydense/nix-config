@@ -40,6 +40,7 @@
     ../../modules/server/power       # Always-on laptop: lid ignore, no suspend, 80% charge cap
     ../../modules/server/media       # Jellyfin, Sonarr, Radarr, Prowlarr
     ../../modules/server/music       # Navidrome, slskd, beets, music-shelf, auto-import, AOTD
+    ../../modules/server/invidious   # Invidious YouTube frontend (port 3001), backs Yattee over Tailscale
     ../../modules/server/monitoring  # Prometheus + Grafana
     ../../modules/server/owntracks   # Location tracking (OwnTracks Recorder)
     ../../modules/server/samba       # Network file shares (music, projects)
