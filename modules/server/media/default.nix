@@ -3,7 +3,7 @@
 # Prowlarr manages indexers for both, Immich manages photos.
 # Music is handled separately by modules/server/music/.
 # Used by: carbon.
-{ pkgs, username, ... }:
+{ pkgs, lib, config, username, ... }:
 {
   # Jellyfin — media streaming server (movies, TV, music)
   services.jellyfin = {
@@ -15,24 +15,25 @@
   # Jellyfin needs render/video for hw transcode, plus media group for shared dirs
   users.users.jellyfin.extraGroups = [ "render" "video" "media" ];
 
-  # Sonarr — TV show automation (monitor, search, download, organise)
+  # Sonarr / Radarr / Prowlarr — disabled 2026-04-24 to claw back
+  # ~300MB during memory pressure from the Immich dedup job on a 16GB box.
+  # Re-enable (flip to `enable = true`) when actively adding shows/movies.
   services.sonarr = {
-    enable = true;
+    enable = false;
     openFirewall = true; # 8989
   };
 
-  # Radarr — movie automation (same idea as Sonarr but for films)
   services.radarr = {
-    enable = true;
+    enable = false;
     openFirewall = true; # 7878
   };
 
   # Lidarr removed — music is handled by Navidrome + slskd + beets
   # in modules/server/music/. See that module for the full music pipeline.
 
-  # Prowlarr — indexer manager, feeds search results to Sonarr/Radarr
+  # Indexer manager — only useful while sonarr/radarr are active.
   services.prowlarr = {
-    enable = true;
+    enable = false;
     openFirewall = true; # 9696
   };
 
@@ -58,9 +59,15 @@
   #   };
   # };
 
-  # Shared media group — all *arr services and the user need access to the same dirs
+  # Shared media group — users only added when the corresponding service
+  # is enabled (the service module creates the user). Keeps disabled
+  # services from triggering "user missing group/isSystemUser" assertions.
   users.groups.media = { };
   users.users.${username}.extraGroups = [ "media" ];
-  users.users.sonarr.extraGroups = [ "media" ];
-  users.users.radarr.extraGroups = [ "media" ];
+  users.users.sonarr = lib.mkIf config.services.sonarr.enable {
+    extraGroups = [ "media" ];
+  };
+  users.users.radarr = lib.mkIf config.services.radarr.enable {
+    extraGroups = [ "media" ];
+  };
 }
