@@ -28,13 +28,13 @@ function mgres
 
     if test -n "$TMUX"
         cd $work_dir
-        CLAUDE_CODE_NO_FLICKER=1 claude --permission-mode auto $prompt_args --resume $rest
+        CLAUDE_CODE_NO_FLICKER=1 claude $prompt_args --resume $rest
     else if tmux has-session -t mg 2>/dev/null
         tmux new-window -t mg -c $work_dir \
-            "env CLAUDE_CODE_NO_FLICKER=1 claude --permission-mode auto $prompt_args --resume $rest; exec fish"
+            "env CLAUDE_CODE_NO_FLICKER=1 claude $prompt_args --resume $rest; exec fish"
         tmux attach-session -t mg
     else
         tmux new-session -s mg -c $work_dir \
-            "env CLAUDE_CODE_NO_FLICKER=1 claude --permission-mode auto $prompt_args --resume $rest; exec fish"
+            "env CLAUDE_CODE_NO_FLICKER=1 claude $prompt_args --resume $rest; exec fish"
     end
 end
