@@ -1,6 +1,6 @@
 # nix-darwin configuration for "germanium" (aarch64-darwin, period 4).
 # Mirrors silicon as closely as possible — same shell, packages, and defaults.
-# Germanium-specific: claude-wrapper, Tailscale, Touch ID, Cachix substituters.
+# Germanium-specific: Tailscale, Touch ID, Cachix substituters.
 # Used by: flake.nix darwinConfigurations.germanium
 {
   pkgs,
@@ -14,7 +14,6 @@
     ../../modules/darwin/aerospace
     ../../modules/darwin/karabiner
     ../../modules/darwin/wireproxy # Mullvad WireGuard SOCKS5 proxies for Firefox profiles
-    ../../modules/programs/kimi-claude-proxy/darwin.nix  # Kimi For Coding ↔ Claude Code proxy (launchd user agent on :8787)
   ];
 
   # --- Primary user ---

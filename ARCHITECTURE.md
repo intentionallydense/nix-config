@@ -14,7 +14,7 @@ flake.nix                             Entry point: inputs, darwinConfigurations,
 
 hosts/
   silicon/default.nix                 macOS Intel (chloride): nix settings, brew casks, macOS defaults
-  germanium/configuration.nix         macOS Apple Silicon (bromide): brew casks, macOS defaults, claude-wrapper
+  germanium/configuration.nix         macOS Apple Silicon (bromide): brew casks, macOS defaults
   carbon/configuration.nix            NixOS (fluoride): imports all server modules (Hyprland, hardware, etc.)
   carbon/hardware-configuration.nix   Auto-generated hardware config for the NixOS server
   common.nix                          Shared NixOS config: users, boot, audio, fonts, nix settings
