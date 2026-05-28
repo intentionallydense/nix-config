@@ -57,23 +57,10 @@
         port = 2200; # regular sshd, bypasses Tailscale SSH
       };
       "carbon" = {
-        # direct alias for carbon (used by colab tunnel)
+        # direct alias for carbon (literal-name convenience over `nitrogen`)
         user = "fluoride";
         hostname = "100.124.5.91";
         port = 2200;
-      };
-      "colab" = {
-        # Colab Pro VM via reverse tunnel through carbon.
-        # Host key checking is disabled because Colab VMs are ephemeral —
-        # each session gets a new host key, so verification is meaningless.
-        hostname = "localhost";
-        port = 2222;
-        user = "root";
-        proxyJump = "carbon";
-        extraOptions = {
-          StrictHostKeyChecking = "no";
-          UserKnownHostsFile = "/dev/null";
-        };
       };
     };
   };
