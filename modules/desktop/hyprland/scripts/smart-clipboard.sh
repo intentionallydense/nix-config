@@ -14,7 +14,7 @@ case "$?" in
     # Check if the focused window is a terminal
     activeclass=$(hyprctl activewindow -j | jq -r '.class // ""')
     case "$activeclass" in
-      *kitty*|*Alacritty*|*foot*|*wezterm*|*konsole*|*xterm*|*terminal*|*Terminal*)
+      *kitty*|*Alacritty*|*foot*|*wezterm*|*konsole*|*xterm*|*terminal*|*Terminal*|*ghostty*)
         wtype -M ctrl -M shift -k v
         ;;
       *)
