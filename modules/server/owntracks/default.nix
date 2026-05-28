@@ -33,4 +33,29 @@ in
 
   # Open ports for Tailscale access
   networking.firewall.allowedTCPPorts = [ 8083 ];
+
+  # Daily location-timeline generator. Runs at 05:00 local time, writes
+  # claude/location/YYYY-MM-DD.md to the obsidian vault.
+  # Script is at ~/.local/bin/owntracks-day (managed outside the flake;
+  # if it's missing the timer just no-ops).
+  systemd.services.owntracks-day = {
+    description = "Generate yesterday's location timeline from OwnTracks data";
+    after = [ "owntracks-recorder.service" "network.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      User = "fluoride";
+      ExecStart = "/home/fluoride/.local/bin/owntracks-day yesterday";
+    };
+    path = [ pkgs.python3 ];
+  };
+
+  systemd.timers.owntracks-day = {
+    description = "Daily owntracks-day run at 05:00";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "*-*-* 05:00:00";
+      Persistent = true;   # if missed (e.g. machine off), run on next boot
+      Unit = "owntracks-day.service";
+    };
+  };
 }
