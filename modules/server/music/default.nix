@@ -35,6 +35,12 @@ in
       # put ND_LASTFM_APIKEY and ND_LASTFM_SECRET in ~/.config/navidrome/env,
       # set these to true, rebuild, then link your account in the Navidrome web UI.
       LastFM.Enabled = false;
+      # Don't split a single album folder into multiple "release" records based
+      # on differing per-track metadata (e.g. some tracks with MusicBrainz IDs,
+      # others without; mixed encoder TXXX leftovers from format conversion).
+      # Group strictly by (album, albumartist). Cost: multi-disc box sets won't
+      # be visually grouped — fine for this library, which is mostly mp3 albums.
+      Scanner.GroupAlbumReleases = false;
     };
   };
   # Navidrome and slskd need to read/write fluoride's music dirs
@@ -107,6 +113,7 @@ in
     pkgs.ffmpeg
     pkgs.chromaprint  # AcoustID fingerprinting (fpcalc)
     pkgs.libnotify    # notify-send, used by mp3-sync for desktop notifications
+    pkgs.mpv          # used by aotd-play.service for wake-up album playback
     musicPython
   ];
 
@@ -139,6 +146,15 @@ in
       Type = "oneshot";
       User = username;
       ExecStart = "${scriptsDir}/music-import";
+      # Mirror of the kobo-briefing → kobo-sync chain: when music-import
+      # finishes, if the Echo Mini SD card happens to be plugged in, push
+      # any newly-imported (and freshly-starred) albums to it without
+      # waiting for a replug. mp3-sync silently no-ops when not present.
+      ExecStartPost = pkgs.writeShellScript "trigger-mp3-sync-if-present" ''
+        if [ -L /dev/disk/by-uuid/36F9-1807 ]; then
+          ${pkgs.systemd}/bin/systemctl start --no-block mp3-sync.service
+        fi
+      '';
       Environment = [
         "HOME=/home/${username}"
         "PATH=/run/current-system/sw/bin"
@@ -157,7 +173,8 @@ in
 
   # --- AOTD download: fetches today's album-of-the-day ---
   # Reads the briefing system's AOTD pointer, searches slskd, downloads, imports.
-  # Runs at 7am daily (after briefing assembles at 6:30am).
+  # Runs at 05:30 daily — must come AFTER briefing (05:00) which advances the
+  # AOTD index, and BEFORE aotd-play (06:50) which plays the downloaded album.
   systemd.services.aotd-download = {
     description = "Download today's album-of-the-day from Soulseek";
     after = [ "network-online.target" "slskd.service" ];
@@ -169,6 +186,13 @@ in
       # Wait 30s for slskd to connect and log in to the Soulseek network
       ExecStartPre = "${pkgs.coreutils}/bin/sleep 30";
       ExecStart = "${musicPython}/bin/python ${scriptsDir}/aotd-download";
+      # If Echo Mini is plugged in at 05:30, push today's album immediately
+      # rather than waiting for the next replug or 15-min auto-import cycle.
+      ExecStartPost = pkgs.writeShellScript "trigger-mp3-sync-if-present" ''
+        if [ -L /dev/disk/by-uuid/36F9-1807 ]; then
+          ${pkgs.systemd}/bin/systemctl start --no-block mp3-sync.service
+        fi
+      '';
       Environment = [
         "HOME=/home/${username}"
         "PATH=/run/current-system/sw/bin"
@@ -184,11 +208,53 @@ in
     };
   };
   systemd.timers.aotd-download = {
-    description = "Fetch album-of-the-day at 7am daily";
+    description = "Fetch album-of-the-day at 05:30 daily";
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      OnCalendar = "*-*-* 07:00:00";
+      OnCalendar = "*-*-* 05:30:00";
       Persistent = true;  # catch up if machine was asleep
+    };
+  };
+
+  # --- AOTD play: wake-up playback at 06:50 ---
+  # Connects the Bluetooth speaker (猫王·小王子OTR), routes audio to it, and plays
+  # today's downloaded album with a gentle volume ramp (10% → 60% over 3 min).
+  # Reads the same briefing pointer that aotd-download used, so the played album
+  # matches what was just fetched.
+  # Quietly no-ops if the album isn't in the library yet (e.g. download still
+  # running or failed) — silence is better than yesterday's audio.
+  systemd.services.aotd-play = {
+    description = "Play today's album-of-the-day on the Bluetooth speaker";
+    after = [ "aotd-download.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      User = username;
+      ExecStart = "${musicPython}/bin/python ${scriptsDir}/aotd-play";
+      Environment = [
+        "HOME=/home/${username}"
+        # bluetoothctl lives in /run/current-system/sw/bin; wpctl and mpv too
+        "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/${username}/bin"
+        # Required so wpctl/pw-cli reach the user's pipewire socket and
+        # bluetoothctl talks to the system bus correctly under the user session
+        "XDG_RUNTIME_DIR=/run/user/1000"
+        "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus"
+        # Forces UTF-8 so the Chinese-named sink parses cleanly under systemd's
+        # otherwise-C locale
+        "LANG=en_US.UTF-8"
+        "LC_ALL=en_US.UTF-8"
+      ];
+      # Generous timeout — long albums + the 3-min volume ramp + any retries
+      TimeoutStartSec = "120min";
+    };
+  };
+  systemd.timers.aotd-play = {
+    description = "Play album-of-the-day at 06:50 daily";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "*-*-* 06:50:00";
+      # Persistent=false on purpose: if the machine was off and missed the
+      # window, don't blast music at a surprise time when it boots later.
+      Persistent = false;
     };
   };
 
