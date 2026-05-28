@@ -74,6 +74,7 @@
     swaynotificationcenter
     git
     signal-desktop
+    google-chrome  # Claude in Chrome browser automation (Chrome/Edge only; connect via /chrome)
     jetbrains.rust-rover
     spotify
     jetbrains.pycharm-oss
