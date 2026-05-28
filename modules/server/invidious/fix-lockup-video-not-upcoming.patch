@@ -1,0 +1,39 @@
+Subject: Fix isUpcoming=true on all lockup-video entries
+
+The new LockupViewModelParser introduced by PR #5736 sets
+`premiere_timestamp: Time.unix(0)` for all lockup-video entries.
+
+This is non-nil, so `SearchVideo#upcoming?`
+(at src/invidious/helpers/serialized_yt_data.cr:150) returns true,
+which serializes as `"isUpcoming": true` in API responses.
+
+API clients that hide upcoming premieres from feeds (Yattee, etc.)
+therefore filter every channel video out of the subscription feed
+and channel pages.
+
+The legacy VideoRendererParser correctly passes through the
+*parsed* premiere_timestamp value, which is nil for normal videos.
+This patch matches that semantic for the new parser.
+
+Note: ReelItemRendererParser and ShortsLockupViewModelParser have
+the same pre-existing pattern but aren't fixed here — the former
+is effectively dead code, and shorts go through a separate UI path
+in Yattee. Worth raising as a follow-up upstream but out of scope
+for unbreaking the feed today.
+
+---
+ src/invidious/yt_backend/extractors.cr | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/invidious/yt_backend/extractors.cr b/src/invidious/yt_backend/extractors.cr
+--- a/src/invidious/yt_backend/extractors.cr
++++ b/src/invidious/yt_backend/extractors.cr
+@@ -677,7 +677,7 @@ private module Parsers
+           views:              view_count,
+           description_html:   "",
+           length_seconds:     0,
+-          premiere_timestamp: Time.unix(0),
++          premiere_timestamp: nil,
+           author_verified:    false,
+           author_thumbnail:   nil,
+           badges:             VideoBadges::None,

@@ -1,0 +1,33 @@
+Subject: Always emit authorThumbnails field, even when author_thumbnail is nil
+
+SearchVideo#to_json wraps the entire `authorThumbnails` JSON field in
+an `if author_thumbnail` guard. When the underlying author_thumbnail is
+nil (as it is for entries built by the new LockupViewModelParser added
+in PR #5736 — YouTube doesn't include the channel avatar in channel-tab
+lockups since you're already on the channel page), the field is omitted
+from the response entirely.
+
+Yattee silently filters entries that lack `authorThumbnails`, which
+makes the subscription feed and channel pages appear empty even when
+the underlying data is correct.
+
+This patch moves the nil guard inside the json.array call so the field
+is always present in the response, emitted as `[]` when no thumbnail
+is available. Behavior is unchanged when author_thumbnail is non-nil.
+
+---
+--- a/src/invidious/helpers/serialized_yt_data.cr
++++ b/src/invidious/helpers/serialized_yt_data.cr
+@@ -91,9 +91,9 @@
+ 
+       author_thumbnail = self.author_thumbnail
+ 
+-      if author_thumbnail
+-        json.field "authorThumbnails" do
+-          json.array do
++      json.field "authorThumbnails" do
++        json.array do
++          if author_thumbnail
+             qualities = {32, 48, 76, 100, 176, 512}
+ 
+             qualities.each do |quality|

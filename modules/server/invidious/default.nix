@@ -38,6 +38,71 @@ let
   companionEnvFile = "${stateDir}/companion.env";
 in
 {
+  # Cherry-picks for the cluster of YouTube schema changes that broke
+  # channel/feed parsing in May 2026, plus one local fix on top:
+  #
+  #   1. KeyError "collectionThumbnailViewModel" — YouTube flattened
+  #      playlist thumbnail nesting. (Issue #5516, merged as 99390d0.)
+  #   2. Channel videos delivered as lockupViewModel (same wrapper as
+  #      playlists), causing Invidious to misclassify videos as playlists
+  #      with videoCount=-1. (Issue #5727, fixed by draft PR #5736 which
+  #      adds VIDEO/PLAYLIST/PODCAST contentType discrimination.)
+  #   3. PR #5736 ports a pre-existing pattern from ReelItem/Shorts
+  #      parsers that sets `premiere_timestamp: Time.unix(0)` for all
+  #      lockup-video entries. That's non-nil, so SearchVideo#upcoming?
+  #      returns true, serializing as `"isUpcoming": true` for every
+  #      channel video. API clients that filter upcoming premieres from
+  #      feeds (Yattee) then drop every entry. Local patch sets it to
+  #      nil instead, matching VideoRendererParser semantics.
+  #   4. SearchVideo#to_json wraps the entire `authorThumbnails` field
+  #      in an `if author_thumbnail` guard. Lockup-video entries have
+  #      author_thumbnail=nil (YouTube omits the avatar in channel-tab
+  #      lockups), so the field is omitted entirely from the response.
+  #      Yattee silently filters entries that lack the field, leaving
+  #      its subscription feed and channel pages blank even though the
+  #      data is correct. Local patch moves the guard inside json.array
+  #      so the field is always present (as `[]` when nil).
+  #
+  # The PR (#5736) is a DRAFT as of 2026-05-22 — pinned to commit
+  # f684437754eb5a62529f4fd2b229af0430eb96da. If Fijxu force-pushes the
+  # branch, our build is unaffected (we resolve to the exact commit), but
+  # we should swap to the master commit hash once the PR merges.
+  #
+  # Note: PR #5736 applies on top of 99390d0 — both patches are required
+  # together; the PR fails to apply on v2.20260207.0 alone. The local
+  # isUpcoming patch then applies on top of both.
+  #
+  # Known residual gaps in this PR (per Fijxu's own description):
+  #   - Channel podcasts won't appear (LOCKUP_CONTENT_TYPE_PODCAST is not
+  #     yet handled).
+  #   - Playlist "author" hyperlink shows update date instead of channel.
+  #   - lengthSeconds=0 for all lockup-video entries (duration parsing
+  #     in the new lockup shape isn't implemented yet). Cosmetic only —
+  #     Yattee shows 0:00 in the duration overlay but plays fine.
+  #
+  # TODO: remove this overlay once nixpkgs ships a release containing
+  # the upstream merged fixes (likely v2.2026xxxx.0 after May 2026).
+  nixpkgs.overlays = [
+    (final: prev: {
+      invidious = prev.invidious.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          (final.fetchpatch {
+            name = "fix-collectionThumbnailViewModel-99390d0.patch";
+            url = "https://github.com/iv-org/invidious/commit/99390d065d69bb451dea8aedf9a1bbaa52cddf2a.patch";
+            hash = "sha256-fFyn00mOrSGygwZycJN6Su0p5ZaKMU/uqYrBFfVM1lQ=";
+          })
+          (final.fetchpatch {
+            name = "fix-lockup-video-classification-pr5736.patch";
+            url = "https://github.com/iv-org/invidious/pull/5736.patch";
+            hash = "sha256-wFclJrc+NQqvY6PWwTj6DySSCctx616mL80iDVEOglI=";
+          })
+          ./fix-lockup-video-not-upcoming.patch
+          ./fix-author-thumbnails-emit-empty.patch
+        ];
+      });
+    })
+  ];
+
   # Shared-secret provisioner. Runs once at boot; regenerates the two
   # derivative files from the persistent key every time (cheap and
   # self-healing if someone mucks with them).
