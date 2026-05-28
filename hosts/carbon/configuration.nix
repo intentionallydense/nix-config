@@ -30,7 +30,6 @@
     ../../modules/programs/editor/${editor} # Set editor defined in flake.nix
     ../../modules/programs/shell/bash # NixOS system-level bash config
     ../../modules/programs/secrets   # sops-encrypted API keys → fish env vars
-    ../../modules/programs/kimi-claude-proxy  # Kimi For Coding ↔ Claude Code proxy (user systemd service on :8787)
     # ../../modules/programs/media/discord
     # ../../modules/programs/media/spicetify
     # ../../modules/programs/media/youtube-music
@@ -40,10 +39,11 @@
     ../../modules/server/power       # Always-on laptop: lid ignore, no suspend, 80% charge cap
     ../../modules/server/media       # Jellyfin, Sonarr, Radarr, Prowlarr
     ../../modules/server/music       # Navidrome, slskd, beets, music-shelf, auto-import, AOTD
+    ../../modules/server/books       # Calibre-Web (port 8083), Kobo plug-in sync
     ../../modules/server/invidious   # Invidious YouTube frontend (port 3001), backs Yattee over Tailscale
     ../../modules/server/monitoring  # Prometheus + Grafana
     ../../modules/server/owntracks   # Location tracking (OwnTracks Recorder)
-    ../../modules/server/samba       # Network file shares (music, projects)
+    # ../../modules/server/samba       # Network file shares (music, projects)
     ../../modules/server/backup      # Weekly + monthly rsync backups to external SanDisk 2TB
     ../../modules/server/sunshine    # Remote desktop streaming (Moonlight client)
     ../../modules/programs/misc/thunar
@@ -116,13 +116,13 @@
   networking.hostName = hostname; # Set hostname defined in flake.nix
 
   # Stream my media to my devices via the network
-  services.syncthing = {
-    enable = true;
-    openDefaultPorts = true;
-    user = "${username}";
-    dataDir = "/home/${username}"; # default location for new folders
-    configDir = "/home/${username}/.config/syncthing";
-  };
+  # services.syncthing = {
+  #   enable = true;
+  #   openDefaultPorts = true;
+  #   user = "${username}";
+  #   dataDir = "/home/${username}"; # default location for new folders
+  #   configDir = "/home/${username}/.config/syncthing";
+  # };
 
   services.tailscale = {
     enable = true;
@@ -132,37 +132,19 @@
   networking.firewall.trustedInterfaces = [ "tailscale0" ];
   networking.firewall.allowedUDPPortRanges = [ { from = 60000; to = 61000; } ]; # mosh
 
-  # LLM Interface web UI — starts on boot, reachable over Tailscale.
-  # Uses the claude-ai conda env rather than a nix-managed Python so the
-  # service matches the environment used for local development.
-  systemd.services.claude-wrapper = {
-    description = "LLM Interface web UI";
-    after = [ "network.target" "tailscaled.service" ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Type = "simple";
-      User = username;
-      WorkingDirectory = "/home/${username}/claude-wrapper/claudepilled";
-      ExecStart = "/home/${username}/miniconda3/envs/claude-ai/bin/python -m llm_interface.server";
-      Restart = "on-failure";
-      RestartSec = 5;
-      Environment = "PYTHONPATH=/home/${username}/claude-wrapper/claudepilled:/home/${username}/briefing";
-    };
-  };
-
   # TaskChampion sync server — enables Taskwarrior sync with TaskChamp (iOS)
-  systemd.services.taskchampion-sync-server = {
-    description = "TaskChampion sync server";
-    after = [ "network.target" "tailscaled.service" ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Type = "simple";
-      User = username;
-      ExecStart = "${pkgs.taskchampion-sync-server}/bin/taskchampion-sync-server --listen 0.0.0.0:9743 --data-dir /home/${username}/.local/share/taskchampion-sync-server";
-      Restart = "on-failure";
-      RestartSec = 5;
-    };
-  };
+  # systemd.services.taskchampion-sync-server = {
+  #   description = "TaskChampion sync server";
+  #   after = [ "network.target" "tailscaled.service" ];
+  #   wantedBy = [ "multi-user.target" ];
+  #   serviceConfig = {
+  #     Type = "simple";
+  #     User = username;
+  #     ExecStart = "${pkgs.taskchampion-sync-server}/bin/taskchampion-sync-server --listen 0.0.0.0:9743 --data-dir /home/${username}/.local/share/taskchampion-sync-server";
+  #     Restart = "on-failure";
+  #     RestartSec = 5;
+  #   };
+  # };
 
   # Overnight research — processes research-queue.md via claude CLI at 2am daily
   systemd.services.overnight-research = {
