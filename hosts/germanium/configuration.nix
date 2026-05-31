@@ -83,6 +83,7 @@
     onActivation.cleanup = "zap";
     taps = [
       "nikitabobko/tap" # AeroSpace tiling WM
+      "athevon/tokeneater" # TokenEater menu-bar Claude usage monitor
     ];
     brews = [
       "choose-gui" # Fuzzy picker for app launcher script
@@ -99,6 +100,7 @@
       "karabiner-elements"
 
       # Communication
+      "beeper"
       "signal"
       "slack"
       "whatsapp"
@@ -118,6 +120,7 @@
       "tailscale"
       "selfcontrol"
       "ollama"
+      "tokeneater" # Menu-bar Claude usage monitor
       "utm"
       # No virtualbox — no ARM support
 
