@@ -6,7 +6,7 @@
   terminalFileManager,
   kbdLayout,
   kbdVariant,
-  monitor ? ",preferred,auto,1", # host display line; silicon overrides to 1.33 (Retina HiDPI)
+  monitors ? [ ",preferred,auto,1" ], # host display lines; silicon: 1.33 scale + disable phantom eDP-2
   ...
 }:
 {
@@ -49,6 +49,7 @@
   home-manager.sharedModules =
     let
       inherit (lib) getExe getExe';
+      monitorLines = lib.concatMapStringsSep "\n" (m: "monitor=${m}") monitors;
     in
     [
       (
@@ -464,8 +465,8 @@
                 #pass_mouse_when_bound=0
               }
 
-              # Easily plug in any monitor (host-overridable via the `monitor` arg)
-              monitor=${monitor}
+              # Monitor lines (host-overridable via the `monitors` list arg)
+              ${monitorLines}
             '';
           };
         }

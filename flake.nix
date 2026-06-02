@@ -127,7 +127,7 @@
         sddmTheme = "purple_leaves";
         wallpaper = "kurzgesagt";
         videoDriver = "intel";
-        monitor = ",preferred,auto,1.33"; # Retina HiDPI scale she likes; carbon uses the module default
+        monitors = [ ",preferred,auto,1.33" "eDP-2,disable" ]; # Retina 1.33 + kill the phantom eDP-2 the bound amdgpu advertises
         hostname = "silicon";
         locale = "en_GB.UTF-8";
         timezone = "Europe/London";
