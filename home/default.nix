@@ -49,18 +49,22 @@
   # --- SSH ---
   programs.ssh = {
     enable = true;
+    # Adopt the new home-manager default (no implicit "*" block). The legacy
+    # defaults it used to inject all mirror OpenSSH's own, so effective config
+    # is unchanged — this just silences the deprecation warning. 2026-06-02.
+    enableDefaultConfig = false;
     matchBlocks = {
       "nitrogen" = {
         # carbon (NixOS server, period 2) — group 15 = nitrogen
         user = "fluoride";
         hostname = "100.124.5.91"; # Tailscale IP (MagicDNS off)
-        port = 2200; # regular sshd, bypasses Tailscale SSH
+        # Was :2200 (plain sshd for the Colab tunnel) — that's gone, so this now
+        # connects over Tailscale SSH on :22 (identity-based auth). 2026-06-01.
       };
       "carbon" = {
         # direct alias for carbon (literal-name convenience over `nitrogen`)
         user = "fluoride";
         hostname = "100.124.5.91";
-        port = 2200;
       };
     };
   };

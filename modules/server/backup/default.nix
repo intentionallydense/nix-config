@@ -2,7 +2,7 @@
 # Weekly snapshots (keep 4) + monthly snapshots (keep 12) using rsync --link-dest
 # for space-efficient incremental backups. Backs up /home/fluoride + service state.
 # Used by: carbon.
-{ pkgs, username, ... }:
+{ pkgs, config, username, ... }:
 let
   backupMount = "/mnt/backups";
   backupScript = pkgs.writeShellScript "system-backup" ''
@@ -90,6 +90,12 @@ in
     serviceConfig = {
       Type = "oneshot";
       ExecStart = "${backupScript} weekly 4";
+      # Ping healthchecks.io on success — ExecStartPost runs only if ExecStart
+      # succeeded, so a failed backup sends no ping → dead-man alert fires.
+      # `-` prefix: a failed ping never marks the backup itself as failed.
+      ExecStartPost = "-${pkgs.writeShellScript "hc-ping-backup" ''
+        ${pkgs.curl}/bin/curl -fsS -m 10 "$(cat ${config.sops.secrets.hc_backup_url.path})" >/dev/null
+      ''}";
       # Needs root to read /var/lib service dirs
       TimeoutStartSec = "4h";
     };
@@ -122,6 +128,10 @@ in
       Persistent = true;
     };
   };
+
+  # healthchecks.io dead-man's-switch ping URL. 0444 so the root backup service
+  # reads it; low-sensitivity, kept out of the public repo via sops.
+  sops.secrets.hc_backup_url.mode = "0444";
 
   environment.systemPackages = [ pkgs.rsync ];
 }

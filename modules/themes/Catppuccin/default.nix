@@ -40,6 +40,9 @@ in
           gtk3.extraConfig = {
             "gtk-application-prefer-dark-theme" = "1";
           };
+          # Keep the legacy default (gtk4 theme = the general gtk theme) explicit,
+          # silencing the home-manager stateVersion<26.05 default-change warning.
+          gtk4.theme = config.gtk.theme;
           gtk4.extraConfig = {
             "gtk-application-prefer-dark-theme" = "1";
           };

@@ -31,8 +31,10 @@ in
     };
   };
 
-  # Open ports for Tailscale access
-  networking.firewall.allowedTCPPorts = [ 8083 ];
+  # OwnTracks (8083) is tailnet-only via trustedInterfaces — the recorder binds
+  # 0.0.0.0 (--http-host above) but the firewall only trusts tailscale0, and the
+  # phone POSTs to the Tailscale IP, so no LAN opening is needed. (Removed
+  # allowedTCPPorts = [ 8083 ] 2026-06-01.)
 
   # Daily location-timeline generator. Runs at 05:00 local time, writes
   # claude/location/YYYY-MM-DD.md to the obsidian vault.

@@ -40,7 +40,7 @@ in
     package = pkgs.calibre-web.overridePythonAttrs (old: {
       pythonRelaxDeps = (old.pythonRelaxDeps or [ ]) ++ [ "wand" ];
     });
-    openFirewall = true;
+    openFirewall = false; # tailnet-only via trustedInterfaces (closes 8084 on LAN)
     listen.ip = "0.0.0.0";
     # 8083 is owntracks (see modules/server/owntracks). Calibre-web's default
     # is 8083, but we move it to 8084 to avoid the conflict.
@@ -142,11 +142,14 @@ in
       # 05:15 timer fired while it's still plugged in), kick kobo-sync to
       # push the freshly-built briefing. --no-block so kobo-briefing.service
       # finishes before kobo-sync starts (avoids ExecStartPost waiting on it).
-      ExecStartPost = pkgs.writeShellScript "trigger-kobo-sync-if-present" ''
+      # `+` prefix runs this ExecStartPost with full privileges (ignoring
+      # User=fluoride) — required so `systemctl start` on a system service
+      # doesn't hit polkit's "interactive authentication required" wall.
+      ExecStartPost = "+${pkgs.writeShellScript "trigger-kobo-sync-if-present" ''
         if [ -L /dev/disk/by-label/KOBOeReader ]; then
           ${pkgs.systemd}/bin/systemctl start --no-block kobo-sync.service
         fi
-      '';
+      ''}";
       EnvironmentFile = config.sops.templates."briefing-cookies-env".path;
       Environment = [
         "HOME=/home/${username}"

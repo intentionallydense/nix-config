@@ -56,6 +56,10 @@
         # SSH client config — element naming: SSH aliases use group 15 of target's period
         programs.ssh = {
           enable = true;
+          # Adopt the new home-manager default (no implicit "*" block); the legacy
+          # defaults it injected all mirror OpenSSH's own, so effective config is
+          # unchanged — this just silences the deprecation warning. 2026-06-02.
+          enableDefaultConfig = false;
           matchBlocks = {
             "phosphorus" = {
               # silicon (Intel Mac, period 3) — group 15 = phosphorus

@@ -23,7 +23,7 @@ in
   # The server-side API key is set below; per-user linking happens in the UI.
   services.navidrome = {
     enable = true;
-    openFirewall = true;
+    openFirewall = false; # tailnet-only via trustedInterfaces (closes 4533 on LAN)
     settings = {
       Address = "0.0.0.0";
       Port = 4533;
@@ -87,12 +87,23 @@ in
     owner = username;  # mp3-sync.service runs as fluoride
   };
 
+  # healthchecks.io ping URL for the AOTD dead-man's-switch. 0444: aotd-download
+  # runs as the user and needs to read it; kept out of the public repo via sops.
+  sops.secrets.hc_aotd_url.mode = "0444";
+
   # --- slskd: headless Soulseek client ---
   # Web UI at :5030, downloads to incoming/, shares library/ back to the network.
   # Credentials managed by sops-nix (see sops.templates above).
   services.slskd = {
     enable = true;
-    openFirewall = true;
+    # Tailnet-only. On eduroam we can't port-forward inbound 50300 (no control
+    # over the gateway, and its NAT blocks unsolicited inbound), so opening the
+    # Soulseek listener would expose it to the eduroam LAN for zero benefit —
+    # slskd runs outbound-only either way (same reason qBittorrent is disabled
+    # here). The web UI (5030) is likewise tailnet-only (domain = null below).
+    # If carbon ever moves to a network you control: set openFirewall = true
+    # AND forward 50300 on the router.
+    openFirewall = false;
     domain = null; # No nginx reverse proxy — accessed directly over Tailscale
     environmentFile = config.sops.templates."slskd-env".path;
     settings = {
@@ -150,11 +161,14 @@ in
       # finishes, if the Echo Mini SD card happens to be plugged in, push
       # any newly-imported (and freshly-starred) albums to it without
       # waiting for a replug. mp3-sync silently no-ops when not present.
-      ExecStartPost = pkgs.writeShellScript "trigger-mp3-sync-if-present" ''
+      # `+` prefix runs this ExecStartPost with full privileges (ignoring
+      # User=fluoride) — required so `systemctl start` on a system service
+      # doesn't hit polkit's "interactive authentication required" wall.
+      ExecStartPost = "+${pkgs.writeShellScript "trigger-mp3-sync-if-present" ''
         if [ -L /dev/disk/by-uuid/36F9-1807 ]; then
           ${pkgs.systemd}/bin/systemctl start --no-block mp3-sync.service
         fi
-      '';
+      ''}";
       Environment = [
         "HOME=/home/${username}"
         "PATH=/run/current-system/sw/bin"
@@ -186,13 +200,21 @@ in
       # Wait 30s for slskd to connect and log in to the Soulseek network
       ExecStartPre = "${pkgs.coreutils}/bin/sleep 30";
       ExecStart = "${musicPython}/bin/python ${scriptsDir}/aotd-download";
-      # If Echo Mini is plugged in at 05:30, push today's album immediately
-      # rather than waiting for the next replug or 15-min auto-import cycle.
-      ExecStartPost = pkgs.writeShellScript "trigger-mp3-sync-if-present" ''
-        if [ -L /dev/disk/by-uuid/36F9-1807 ]; then
-          ${pkgs.systemd}/bin/systemctl start --no-block mp3-sync.service
-        fi
-      '';
+      # ExecStartPost runs only if the download succeeded. Ping healthchecks
+      # FIRST (non-fatal `-`) so the dead-man signal isn't gated by the mp3-sync
+      # trigger; then the Echo Mini push (the `+` runs it with full privileges,
+      # ignoring User=fluoride, so `systemctl start` on a system service doesn't
+      # hit polkit's "interactive authentication required" wall).
+      ExecStartPost = [
+        "-${pkgs.writeShellScript "hc-ping-aotd" ''
+          ${pkgs.curl}/bin/curl -fsS -m 10 "$(cat ${config.sops.secrets.hc_aotd_url.path})" >/dev/null
+        ''}"
+        "+${pkgs.writeShellScript "trigger-mp3-sync-if-present" ''
+          if [ -L /dev/disk/by-uuid/36F9-1807 ]; then
+            ${pkgs.systemd}/bin/systemctl start --no-block mp3-sync.service
+          fi
+        ''}"
+      ];
       Environment = [
         "HOME=/home/${username}"
         "PATH=/run/current-system/sw/bin"
@@ -258,8 +280,9 @@ in
     };
   };
 
-  # Open music-shelf port in firewall (Tailscale-gated like everything else)
-  networking.firewall.allowedTCPPorts = [ 4534 ];
+  # music-shelf (4534) is tailnet-only via trustedInterfaces — it binds 0.0.0.0
+  # (see ExecStart --host) but the firewall only trusts tailscale0, so no LAN
+  # opening is needed. (Removed allowedTCPPorts = [ 4534 ] 2026-06-01.)
 
   # --- mp3-sync: sync curated music subset to Fiio Echo Mini on plug-in ---
   # Selection: starred albums ∪ albums-in-Navidrome-playlist "echo".

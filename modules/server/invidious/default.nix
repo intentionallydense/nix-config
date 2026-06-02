@@ -199,5 +199,7 @@ in
     };
   };
 
-  networking.firewall.allowedTCPPorts = [ 3001 ];
+  # Invidious (3001) is tailnet-only via trustedInterfaces — it binds 0.0.0.0
+  # (address above) but the firewall only trusts tailscale0. (Removed
+  # allowedTCPPorts = [ 3001 ] 2026-06-01; access is over Tailscale only.)
 }

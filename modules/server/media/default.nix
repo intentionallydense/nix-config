@@ -8,7 +8,7 @@
   # Jellyfin — media streaming server (movies, TV, music)
   services.jellyfin = {
     enable = true;
-    openFirewall = true; # Opens 8096 (HTTP) and 8920 (HTTPS)
+    openFirewall = false; # tailnet-only via trustedInterfaces (was: 8096/8920 + DLNA 1900/7359 on LAN)
   };
 
   # Intel QuickSync hardware transcoding + shared media group
@@ -20,12 +20,12 @@
   # Re-enable (flip to `enable = true`) when actively adding shows/movies.
   services.sonarr = {
     enable = false;
-    openFirewall = true; # 8989
+    openFirewall = false; # tailnet-only when re-enabled (8989)
   };
 
   services.radarr = {
     enable = false;
-    openFirewall = true; # 7878
+    openFirewall = false; # tailnet-only when re-enabled (7878)
   };
 
   # Lidarr removed — music is handled by Navidrome + slskd + beets
@@ -34,15 +34,16 @@
   # Indexer manager — only useful while sonarr/radarr are active.
   services.prowlarr = {
     enable = false;
-    openFirewall = true; # 9696
+    openFirewall = false; # tailnet-only when re-enabled (9696)
   };
 
   # Immich — self-hosted Google Photos (photo backup, search, sharing)
   # Runs on port 2283
   services.immich = {
     enable = true;
-    openFirewall = true;
-    host = "0.0.0.0"; # Listen on all interfaces (access gated by Tailscale firewall)
+    openFirewall = false; # tailnet-only via trustedInterfaces (closes 2283 on LAN; the
+                          # random worker port was never opened, so it's gated too)
+    host = "0.0.0.0"; # Bind all interfaces so tailscale0 reaches it; firewall gates LAN/WAN
     machine-learning.enable = true; # Smart search, face recognition, object detection
   };
 

@@ -42,6 +42,8 @@
     ../../modules/server/books       # Calibre-Web (port 8083), Kobo plug-in sync
     ../../modules/server/invidious   # Invidious YouTube frontend (port 3001), backs Yattee over Tailscale
     ../../modules/server/monitoring  # Prometheus + Grafana
+    ../../modules/server/alerts      # ntfy health alerts (disk/units/SMART/temp)
+    ../../modules/server/briefing    # Daily briefing assembly (user service + timer, 05:00)
     ../../modules/server/owntracks   # Location tracking (OwnTracks Recorder)
     # ../../modules/server/samba       # Network file shares (music, projects)
     ../../modules/server/backup      # Weekly + monthly rsync backups to external SanDisk 2TB
@@ -131,7 +133,9 @@
   };
 
   networking.firewall.trustedInterfaces = [ "tailscale0" ];
-  networking.firewall.allowedUDPPortRanges = [ { from = 60000; to = 61000; } ]; # mosh
+  # mosh — tailnet-only now (works over tailscale0, a trusted interface).
+  # Uncomment to also accept mosh from the LAN/WAN:
+  # networking.firewall.allowedUDPPortRanges = [ { from = 60000; to = 61000; } ]; # mosh
 
   # TaskChampion sync server — enables Taskwarrior sync with TaskChamp (iOS)
   # systemd.services.taskchampion-sync-server = {
@@ -199,13 +203,41 @@
     };
   };
 
-  # SSH (only reachable over Tailscale via trustedInterfaces above)
-  # Port 22: handled by Tailscale SSH (identity-based auth)
-  # Port 2200: regular sshd for Colab reverse tunnel (key-based auth,
-  #   bypasses Tailscale SSH which intercepts port 22)
+  # Claude Code Remote Control — persistent server so carbon is reachable from
+  # claude.ai/code and the Claude mobile app. User service + lingering = up even
+  # when no one's logged in. Uses the claude.ai subscription creds in
+  # ~/.claude/.credentials.json; Remote Control requires subscription auth and
+  # refuses to start if ANTHROPIC_API_KEY is set. That global export was removed
+  # from modules/programs/secrets, but UnsetEnvironment also scrubs any stale
+  # copy the user manager still holds until the next full re-login/reboot.
+  # NOTE: `claude` here is the imperative native install at ~/.local/bin/claude
+  # (self-updating symlink, not nix-managed).
+  systemd.user.services.claude-remote-control = {
+    description = "Claude Code Remote Control (drive carbon from claude.ai/code + mobile)";
+    wantedBy = [ "default.target" ];
+    serviceConfig = {
+      Type = "simple";
+      WorkingDirectory = "/home/${username}/Documents/Obsidian/${vaultName}";
+      ExecStart = "/home/${username}/.local/bin/claude remote-control --name ${hostname} --spawn same-dir --permission-mode acceptEdits";
+      UnsetEnvironment = "ANTHROPIC_API_KEY";
+      Environment = [
+        "HOME=/home/${username}"
+        "PATH=/home/${username}/.local/bin:/run/current-system/sw/bin:/etc/profiles/per-user/${username}/bin:/usr/bin:/bin"
+      ];
+      Restart = "always";
+      RestartSec = 10;
+    };
+  };
+
+  # SSH — tailnet + physical only. Tailscale SSH handles :22 over the tailnet
+  # (identity-based auth); the system sshd is not exposed on the LAN/WAN because
+  # openFirewall is off and only tailscale0 is a trusted interface.
+  # (:2200 removed 2026-06-01 — it existed for a Colab reverse tunnel that has
+  #  since been torn down.)
   services.openssh = {
     enable = true;
-    ports = [ 22 2200 ];
+    ports = [ 22 ];
+    openFirewall = false;
   };
 
   networking.nameservers = [ "1.1.1.1" "8.8.8.8" "8.8.4.4" ];

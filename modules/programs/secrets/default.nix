@@ -22,7 +22,6 @@ let
 in
 {
   sops.secrets = {
-    anthropic_api_key.owner = "fluoride";
     vastai_api_key.owner = "fluoride";
     openrouter_api_key.owner = "fluoride";
     huggingface_token.owner = "fluoride";
@@ -32,7 +31,6 @@ in
     owner = "fluoride";
     mode = "0400";
     content = ''
-      set -gx ANTHROPIC_API_KEY "${config.sops.placeholder.anthropic_api_key}"
       set -gx VASTAI_API_KEY "${config.sops.placeholder.vastai_api_key}"
       set -gx OPENROUTER_API_KEY "${config.sops.placeholder.openrouter_api_key}"
       set -gx HF_TOKEN "${config.sops.placeholder.huggingface_token}"
