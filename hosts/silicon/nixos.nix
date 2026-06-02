@@ -54,18 +54,20 @@
   # power-manages itself and amdgpu can bind + runtime-suspend the dGPU — the real battery/heat fix.
   hardware.enableRedistributableFirmware = true;
 
-  # Park the now-bound Navi14 dGPU at its lowest power state — nothing renders on it (display is the
-  # iGPU via the gmux), so min clocks = less heat/battery. t2linux's recommended method (amdgpu DPM,
-  # not vgaswitcheroo); without it the bound dGPU sits at DPM=auto / control=on, awake and warm.
-  services.udev.extraRules = ''
-    SUBSYSTEM=="drm", DRIVERS=="amdgpu", ATTR{device/power_dpm_force_performance_level}="low"
-  '';
+  # The AMD Navi14 dGPU can't suspend on T2: amdgpu's SMU suspend times out → failed GPU-reset storm
+  # → frozen machine on resume (hard reboot). We never render on the dGPU under Linux (display is the
+  # iGPU via the gmux, already routed to IGD), so keep amdgpu off it entirely. Fixes suspend, drops
+  # the phantom eDP-2 amdgpu was advertising, and stops the reset hangs; iGPU firmware is unaffected.
+  # Trade-off: external displays wired through the dGPU won't work — revisit with an unbind-before-
+  # suspend hook if the dGPU is ever needed.
+  boot.blacklistedKernelModules = [ "amdgpu" ];
 
   # T2 + iGPU: dodge the black-screen-on-resume bug.
   # mem_sleep_default=s2idle: T2 firmware has no working S3/deep; force modern standby or resume hangs.
   boot.kernelParams = [
     "i915.enable_guc=3"
     "mem_sleep_default=s2idle"
+    "modprobe.blacklist=amdgpu" # belt-and-suspenders with boot.blacklistedKernelModules (above)
   ];
 
   # Initrd modules to find + mount the btrfs root on the internal NVMe at boot
