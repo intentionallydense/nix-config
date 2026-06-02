@@ -6,6 +6,7 @@
   terminalFileManager,
   kbdLayout,
   kbdVariant,
+  monitor ? ",preferred,auto,1", # host display line; silicon overrides to 1.33 (Retina HiDPI)
   ...
 }:
 {
@@ -463,8 +464,8 @@
                 #pass_mouse_when_bound=0
               }
 
-              # Easily plug in any monitor
-              monitor=,preferred,auto,1
+              # Easily plug in any monitor (host-overridable via the `monitor` arg)
+              monitor=${monitor}
             '';
           };
         }

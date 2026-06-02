@@ -48,7 +48,11 @@
   };
 
   # T2 + iGPU: dodge the black-screen-on-resume bug.
-  boot.kernelParams = [ "i915.enable_guc=3" ];
+  # mem_sleep_default=s2idle: T2 firmware has no working S3/deep; force modern standby or resume hangs.
+  boot.kernelParams = [
+    "i915.enable_guc=3"
+    "mem_sleep_default=s2idle"
+  ];
 
   # Initrd modules to find + mount the btrfs root on the internal NVMe at boot
   # (no hardware-configuration.nix here; apple-t2 layers apple-bce on top of these).
