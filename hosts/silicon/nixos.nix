@@ -47,6 +47,13 @@
     };
   };
 
+  # Redistributable GPU/CPU firmware (linux-firmware). The slim install shipped without it,
+  # which crippled BOTH GPUs: i915 couldn't load the KBL DMC blob so runtime power management
+  # was DISABLED on the iGPU, and amdgpu couldn't load navi14_sos/smc so the dGPU never bound
+  # and sat powered-but-unmanaged. This ships the DMC/GuC + Navi14 blobs so the iGPU
+  # power-manages itself and amdgpu can bind + runtime-suspend the dGPU — the real battery/heat fix.
+  hardware.enableRedistributableFirmware = true;
+
   # T2 + iGPU: dodge the black-screen-on-resume bug.
   # mem_sleep_default=s2idle: T2 firmware has no working S3/deep; force modern standby or resume hangs.
   boot.kernelParams = [
