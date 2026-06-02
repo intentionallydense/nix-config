@@ -50,6 +50,21 @@
   # T2 + iGPU: dodge the black-screen-on-resume bug.
   boot.kernelParams = [ "i915.enable_guc=3" ];
 
+  # Initrd modules to find + mount the btrfs root on the internal NVMe at boot
+  # (no hardware-configuration.nix here; apple-t2 layers apple-bce on top of these).
+  boot.initrd.availableKernelModules = [
+    "nvme"
+    "xhci_pci"
+    "thunderbolt"
+    "usb_storage"
+    "usbhid"
+    "sd_mod"
+  ];
+
+  # Initial login password for chloride — CHANGE IT after first boot (`passwd`).
+  # Without this the account is locked and SDDM won't let you in.
+  users.users.chloride.initialPassword = "changeme";
+
   networking.hostName = hostname;
 
   # Put silicon back on the tailnet (reachable as a peer, like before). `tailscale up` post-install.
