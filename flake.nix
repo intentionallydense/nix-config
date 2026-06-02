@@ -22,6 +22,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # --- silicon (NixOS on the T2 MacBook) inputs ---
+    nixos-hardware.url = "github:NixOS/nixos-hardware";
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # --- NixOS server (carbon) inputs ---
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
@@ -108,6 +115,25 @@
         kbdVariant = "extd";
         consoleKeymap = "uk";
         vaultName = "magnesium";
+      };
+
+      # --- NixOS (silicon) — Intel T2 MacBook (MacBookPro16,1), period 3, ex-macOS ---
+      siliconNixosSettings = {
+        username = "chloride";
+        editor = "nixvim";
+        browser = "firefox";
+        terminal = "ghostty";
+        terminalFileManager = "yazi";
+        sddmTheme = "purple_leaves";
+        wallpaper = "kurzgesagt";
+        videoDriver = "intel";
+        hostname = "silicon";
+        locale = "en_GB.UTF-8";
+        timezone = "Europe/London";
+        kbdLayout = "gb";
+        kbdVariant = "extd";
+        consoleKeymap = "uk";
+        vaultName = "calcium";
       };
 
       systems = [
@@ -199,6 +225,18 @@
         specialArgs = {
           inherit self inputs outputs;
         } // carbonSettings;
+      };
+
+      # silicon — NixOS on the 2019 16" MacBook Pro (T2). disko + apple-t2 are
+      # imported inside ./hosts/silicon/nixos.nix; firmware/iGPU handled there.
+      nixosConfigurations.silicon = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          ./hosts/silicon/nixos.nix
+        ];
+        specialArgs = {
+          inherit self inputs outputs;
+        } // siliconNixosSettings;
       };
     };
 }

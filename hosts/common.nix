@@ -131,7 +131,7 @@
   # Bootloader.
   boot = {
     tmp.cleanOnBoot = true;
-    kernelPackages = pkgs.linuxPackages_latest; # _latest, _zen, _xanmod_latest, _hardened, _rt, _OTHER_CHANNEL, etc.
+    kernelPackages = pkgs.lib.mkDefault pkgs.linuxPackages_latest; # mkDefault so a host module (e.g. apple-t2 on silicon) can override the kernel; carbon still gets _latest
     kernelParams = [
       "preempt=full" # lower latency but less throughput
     ];
