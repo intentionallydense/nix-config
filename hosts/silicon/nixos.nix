@@ -32,6 +32,7 @@
     ../../modules/programs/misc/thunar
     ../../modules/programs/misc/nix-ld
     ../../modules/programs/wireproxy # Mullvad WireGuard SOCKS5 proxies for the Firefox profiles
+    ../../modules/programs/browser/firefox-profiles # the 4 Mullvad-isolated Firefox profiles
 
     # Deliberately NOT imported (vs carbon):
     #   modules/server/*       — silicon's a laptop, not the server
