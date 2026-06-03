@@ -100,7 +100,8 @@ secrets/                              sops-encrypted secrets (silicon)
 - **Wireproxy for Firefox profile isolation**: Each Firefox profile routes through a
   dedicated Mullvad WireGuard exit node via wireproxy (userspace WireGuard → SOCKS5).
   Private keys are sops-encrypted; configs are generated at activation time. Launchd agents
-  auto-start each tunnel on login. Currently silicon-only (needs sops key per host).
+  auto-start each tunnel on login. Runs on both Macs (silicon + germanium); each host needs
+  its own sops age key.
 - **Three hosts coexist**: silicon (Intel Mac, fish), germanium (ARM Mac, fish),
   carbon (NixOS, Hyprland, fish). All import modules/home/; Macs also import home/default.nix.
 
