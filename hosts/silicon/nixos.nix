@@ -10,6 +10,7 @@
   hostname,
   browser,
   editor,
+  username,
   ...
 }:
 {
@@ -30,6 +31,7 @@
     ../../modules/programs/shell/bash
     ../../modules/programs/misc/thunar
     ../../modules/programs/misc/nix-ld
+    ../../modules/programs/wireproxy # Mullvad WireGuard SOCKS5 proxies for the Firefox profiles
 
     # Deliberately NOT imported (vs carbon):
     #   modules/server/*       — silicon's a laptop, not the server
@@ -105,6 +107,13 @@
   services.openssh = {
     enable = true;
     openFirewall = false;
+  };
+
+  # sops-nix — system secrets (the wireproxy WireGuard keys), decrypted at activation.
+  # Age identity derives from chloride's SSH key (mirrors carbon's pattern).
+  sops = {
+    defaultSopsFile = ../../secrets/secrets.yaml;
+    age.sshKeyPaths = [ "/home/${username}/.ssh/id_ed25519" ];
   };
 
   # T2 kernel binary cache — pull the patched kernel prebuilt instead of recompiling it

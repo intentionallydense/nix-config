@@ -234,6 +234,7 @@
       nixosConfigurations.silicon = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
+          sops-nix.nixosModules.sops
           ./hosts/silicon/nixos.nix
         ];
         specialArgs = {
