@@ -87,6 +87,7 @@
     ];
     brews = [
       "choose-gui" # Fuzzy picker for app launcher script
+      "mas" # Mac App Store CLI (drives masApps below)
     ];
     casks = [
       # Browsers
@@ -108,6 +109,7 @@
       # Productivity
       "obsidian"
       "zotero"
+      "claude" # Claude desktop app (adopted into brew on 2026-06-03)
 
       # Media
       "vlc"
@@ -133,6 +135,11 @@
       # Crypto wallets
       "electrum"
     ];
+
+    # Mac App Store apps (requires being signed in to the App Store)
+    masApps = {
+      Amphetamine = 937984704; # verified against `mas list` on 2026-06-03
+    };
   };
 
   # --- macOS system defaults (mirrors silicon) ---
@@ -142,6 +149,8 @@
       tilesize = 63;
       mru-spaces = false;
       show-recents = false;
+      autohide-delay = 0.0; # No delay before the dock slides in
+      autohide-time-modifier = 0.0; # Instant show/hide animation
     };
 
     NSGlobalDomain = {
@@ -150,17 +159,29 @@
       "com.apple.swipescrolldirection" = false; # Disable natural scrolling
       AppleShowAllExtensions = true;
       NSAutomaticWindowAnimationsEnabled = false; # Reduces jank with AeroSpace
+      ApplePressAndHoldEnabled = false; # Hold = key-repeat, not the accent popover (vim)
+      AppleInterfaceStyle = "Dark"; # Pin dark mode
+      # Stop macOS "fixing" code/prose as you type
+      NSAutomaticCapitalizationEnabled = false;
+      NSAutomaticSpellingCorrectionEnabled = false;
+      NSAutomaticDashSubstitutionEnabled = false;
+      NSAutomaticQuoteSubstitutionEnabled = false;
+      NSAutomaticPeriodSubstitutionEnabled = false;
     };
 
     finder = {
       AppleShowAllFiles = true;
       FXEnableExtensionChangeWarning = false;
       FXPreferredViewStyle = "clmv";
+      ShowPathbar = true;
+      ShowStatusBar = true;
+      _FXSortFoldersFirst = true;
     };
 
     trackpad = {
       Clicking = true; # Tap to click (laptop preference)
       TrackpadRightClick = true;
+      TrackpadThreeFingerDrag = true; # Three-finger drag to move windows
     };
 
     CustomUserPreferences = {
@@ -173,11 +194,39 @@
   # --- Services ---
   services.tailscale.enable = true;
 
+  # --- Garbage collection ---
+  # Determinate Nix owns the daemon (nix.enable = false above), so nix-darwin's
+  # built-in nix.gc is inert. Run nix-collect-garbage weekly as a standalone
+  # root LaunchDaemon instead. Trims old system generations + frees the store.
+  launchd.daemons.nix-gc = {
+    serviceConfig = {
+      ProgramArguments = [
+        "/nix/var/nix/profiles/default/bin/nix-collect-garbage"
+        "--delete-older-than"
+        "30d"
+      ];
+      StartCalendarInterval = [
+        {
+          Weekday = 0; # Sunday
+          Hour = 3;
+          Minute = 15;
+        }
+      ];
+      StandardOutPath = "/tmp/nix-gc.log";
+      StandardErrorPath = "/tmp/nix-gc.err";
+      RunAtLoad = false;
+    };
+  };
+
   # --- Security ---
   security.pam.services.sudo_local.touchIdAuth = true;
 
   # --- Shell ---
   programs.fish.enable = true;
+  # Make fish a permissible login shell so `chsh` accepts it. nix-darwin maps
+  # this to the stable /run/current-system/sw/bin/fish path (survives fish
+  # upgrades + GC), not a raw store path.
+  environment.shells = [ pkgs.fish ];
 
   # --- Fonts ---
   fonts.packages = with pkgs.nerd-fonts; [
