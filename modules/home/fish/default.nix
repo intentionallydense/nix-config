@@ -212,7 +212,11 @@
             list-gens = "sudo nix-env --list-generations --profile /nix/var/nix/profiles/system/";
             update-input = "nix flake update $argv";
             sysup = "sudo nixos-rebuild switch --flake ~/NixOS# --upgrade-all --show-trace";
-            rebuild = "sudo nixos-rebuild switch --flake ~/NixOS# --show-trace";
+            # --option substituters pins the cache list to carbon's set, excluding silicon's flaky
+            # cache.soopy.moe — its HTTP-522 outages trigger a retry storm that crashes the nix-daemon
+            # mid-rebuild. Carbon is unaffected (identical list). Drop the override once soopy.moe is
+            # reliable again, so silicon pulls the prebuilt T2 kernel on bumps instead of compiling it.
+            rebuild = "sudo nixos-rebuild switch --flake ~/NixOS# --show-trace --option substituters 'https://cache.nixos.org/ https://nix-community.cachix.org/ https://chaotic-nyx.cachix.org/ https://cachix.cachix.org https://nix-gaming.cachix.org/ https://hyprland.cachix.org'";
             nrs = "git -C ~/NixOS pull origin main && sudo nixos-rebuild switch --flake ~/NixOS# --show-trace";
             dots = "cd ~/NixOS/";
             games = "cd /mnt/games/";
