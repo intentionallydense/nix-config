@@ -108,6 +108,7 @@
         sddmTheme = "purple_leaves";
         wallpaper = "kurzgesagt";
         videoDriver = "intel";
+        monitors = [ ",preferred,auto,1" ]; # auto-detect at native res, scale 1 (matches the hyprland module default)
         hostname = "carbon";
         locale = "en_GB.UTF-8";
         timezone = "Europe/London";
