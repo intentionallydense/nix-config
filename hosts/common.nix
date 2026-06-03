@@ -60,16 +60,20 @@
           # defaults it injected all mirror OpenSSH's own, so effective config is
           # unchanged — this just silences the deprecation warning. 2026-06-02.
           enableDefaultConfig = false;
+          # MagicDNS is OFF tailnet-wide, so Tailscale names ("silicon", etc.) do
+          # NOT resolve — especially on CUDN/eduroam, where carbon lives. Pin the
+          # stable Tailscale 100.x IPs instead; they reach over DERP on any network.
+          # (Re-pin if a node is deleted+recreated, e.g. during the silicon rebuild.)
           matchBlocks = {
             "phosphorus" = {
-              # silicon (Intel Mac, period 3) — group 15 = phosphorus
+              # silicon (period 3) — group 15 = phosphorus
               user = "chloride";
-              hostname = "silicon"; # Tailscale MagicDNS
+              hostname = "100.96.7.25";
             };
             "arsenic" = {
-              # germanium (Apple Silicon Mac, period 4) — group 15 = arsenic
+              # germanium (period 4) — group 15 = arsenic
               user = "bromide";
-              hostname = "germanium"; # Tailscale MagicDNS
+              hostname = "100.85.90.68";
             };
           };
         };
