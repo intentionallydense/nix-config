@@ -70,6 +70,13 @@
     "modprobe.blacklist=amdgpu" # belt-and-suspenders with boot.blacklistedKernelModules (above)
   ];
 
+  # T2 WiFi (BCM4364 / brcmfmac) doesn't survive suspend: the firmware fails to reinit on resume,
+  # so networking comes back dead until a reboot. Reload the driver on resume to bring the link back.
+  powerManagement.resumeCommands = ''
+    ${pkgs.kmod}/bin/modprobe -r brcmfmac_wcc brcmfmac || true
+    ${pkgs.kmod}/bin/modprobe brcmfmac
+  '';
+
   # Initrd modules to find + mount the btrfs root on the internal NVMe at boot
   # (no hardware-configuration.nix here; apple-t2 layers apple-bce on top of these).
   boot.initrd.availableKernelModules = [
