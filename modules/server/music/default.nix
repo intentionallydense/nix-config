@@ -248,6 +248,7 @@ in
   systemd.services.aotd-play = {
     description = "Play today's album-of-the-day on the Bluetooth speaker";
     after = [ "aotd-download.service" ];
+    onFailure = [ "aotd-play-failure.service" ];
     serviceConfig = {
       Type = "oneshot";
       User = username;
@@ -277,6 +278,43 @@ in
       # Persistent=false on purpose: if the machine was off and missed the
       # window, don't blast music at a surprise time when it boots later.
       Persistent = false;
+    };
+  };
+
+  # Failure handler — fires (via onFailure on aotd-play above) whenever the
+  # morning playback exits non-zero: speaker unreachable, BT sink never
+  # appeared, mpv crash, etc. Pushes an immediate, actionable ntfy so a silent
+  # wake-up miss becomes a "go power-cycle the speaker" nudge on your phone,
+  # instead of being noticed days later. Mirrors the mp3-sync → mp3-sync-failure
+  # pattern above.
+  #
+  # Runs as root (no User=) so it can read the root-only ntfy_alert_url secret
+  # shared with modules/server/alerts. After alerting it clears aotd-play's
+  # failed latch via reset-failed, so the generic 15-min carbon-alert-check
+  # doesn't pile on a second, cryptic "failed units: aotd-play.service" push
+  # (and re-fire it every 6h) for a one-shot morning hiccup this handler already
+  # reported. Drop that last line if you'd rather the failure stay visible in
+  # `systemctl --failed` as a breadcrumb.
+  systemd.services.aotd-play-failure = {
+    description = "Alert (ntfy) when aotd-play fails to play the morning album";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = pkgs.writeShellScript "aotd-play-failure" ''
+        set -u
+        reason="$(${pkgs.systemd}/bin/journalctl -u aotd-play.service -n 6 --no-pager -o cat 2>/dev/null \
+                  | ${pkgs.gnugrep}/bin/grep -F '[aotd-play]' | tail -1)"
+        [ -n "$reason" ] || reason="aotd-play.service failed — see: journalctl -u aotd-play"
+        ${pkgs.curl}/bin/curl -s -m 10 \
+          -H "Title: 🔇 Album-of-the-day didn't play" \
+          -H "Priority: high" \
+          -H "Tags: mute" \
+          -d "$reason
+
+Speaker likely off / asleep / wedged — power-cycle the 猫王 speaker, then:
+  systemctl start aotd-play   (today's album is already in the library)" \
+          "$(cat ${config.sops.secrets.ntfy_alert_url.path})" || true
+        ${pkgs.systemd}/bin/systemctl reset-failed aotd-play.service || true
+      '';
     };
   };
 
