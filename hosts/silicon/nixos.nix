@@ -34,6 +34,7 @@
     ../../modules/programs/misc/tlp # laptop power mgmt: CPU governors per AC/BAT (charge thresholds no-op on T2)
     ../../modules/programs/wireproxy # Mullvad WireGuard SOCKS5 proxies for the Firefox profiles
     ../../modules/programs/browser/firefox-profiles # the 4 Mullvad-isolated Firefox profiles
+    ../../modules/programs/apps # germanium-parity desktop GUI apps (beeper, signal, obsidian, …)
 
     # Deliberately NOT imported (vs carbon):
     #   modules/server/*       — silicon's a laptop, not the server

@@ -353,6 +353,7 @@
                   "$mainMod, C, exec, $editor"
                   "$mainMod, F, exec, $browser"
                   "$mainMod SHIFT, S, exec, spotify"
+                  "$mainMod SHIFT, M, exec, beeper" # Beeper — chat aggregator (germanium cmd-shift-M)
 
                   # Firefox Mullvad-isolated profiles — Super+Shift+z/x/c/v (germanium's Hyper+zxcv order).
                   # --no-remote forces a separate process per profile so each keeps its own wireproxy SOCKS5 route.
