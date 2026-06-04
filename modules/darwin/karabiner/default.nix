@@ -70,6 +70,14 @@
               simple_modifications = [ ];
               virtual_hid_keyboard = {
                 country_code = 0;
+                # Declaring the type explicitly is what stops the macOS Keyboard Setup
+                # Assistant from popping up on every rebuild: without it, the force-deployed
+                # virtual keyboard has no declared type, so macOS keeps asking us to identify
+                # it (and reverts any GUI choice). On this British ISO Apple keyboard, "ansi"
+                # is (counterintuitively) what makes the §/± top-left key emit keycode 10 (§);
+                # "iso" makes it emit keycode 50 (backtick). Keep "ansi" — the AeroSpace
+                # screenshot binding (cmd-shift-sectionSign) keys off the § keycode.
+                keyboard_type_v2 = "ansi";
                 indicate_sticky_modifier_keys_state = true;
                 mouse_key_xy_scale = 1.0;
               };

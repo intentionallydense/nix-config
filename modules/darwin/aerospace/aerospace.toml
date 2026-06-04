@@ -118,6 +118,14 @@ cmd-shift-d = "exec-and-forget /usr/bin/open -na Ghostty --args -e /bin/bash -lc
 cmd-shift-i = "exec-and-forget /usr/bin/open -na Ghostty --args -e /bin/bash -lc ~/.config/aerospace/scripts/keybinds.sh; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
 cmd-shift-u = "exec-and-forget /usr/bin/open -na Ghostty --args -e /bin/bash -lc 'sudo darwin-rebuild switch --flake ~/nix-config#germanium'; /usr/bin/osascript -e 'tell application \"Ghostty\" to activate'"
 
+# Screenshot — the §/± top-left key emits keycode 10, which AeroSpace calls `sectionSign`.
+# Bound here rather than via macOS's native hotkey 184 (same combo) because that native
+# shortcut keeps getting toggled off when poking System Settings. NB: this relies on the
+# key emitting § (keycode 10) — keep Karabiner's virtual keyboard type = ANSI, which is
+# (counterintuitively) what yields § on this British ISO keyboard.
+# -i = interactive (drag area, or Space to grab a window); -c = copy to clipboard.
+cmd-shift-sectionSign = 'exec-and-forget /usr/sbin/screencapture -i -c'
+
 # -- Relative workspace navigation --
 cmd-shift-left = 'workspace prev --wrap-around'
 cmd-shift-right = 'workspace next --wrap-around'
