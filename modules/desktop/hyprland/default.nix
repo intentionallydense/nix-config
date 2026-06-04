@@ -354,12 +354,12 @@
                   "$mainMod, F, exec, $browser"
                   "$mainMod SHIFT, S, exec, spotify"
 
-                  # Firefox Mullvad-isolated profiles — Super+Shift+z/x/c/v (germanium's Hyper+zxcv, translated).
-                  # Each profile routes through its own wireproxy SOCKS5 backend (see firefox-profiles module).
-                  "$mainMod SHIFT, Z, exec, firefox -P Personal"
-                  "$mainMod SHIFT, X, exec, firefox -P Sensitive"
-                  "$mainMod SHIFT, C, exec, firefox -P Academic"
-                  "$mainMod SHIFT, V, exec, firefox -P Social"
+                  # Firefox Mullvad-isolated profiles — Super+Shift+z/x/c/v (germanium's Hyper+zxcv order).
+                  # --no-remote forces a separate process per profile so each keeps its own wireproxy SOCKS5 route.
+                  "$mainMod SHIFT, Z, exec, firefox --no-remote -P Personal"
+                  "$mainMod SHIFT, X, exec, firefox --no-remote -P Social"
+                  "$mainMod SHIFT, C, exec, firefox --no-remote -P Academic"
+                  "$mainMod SHIFT, V, exec, firefox --no-remote -P Sensitive"
                   "$CONTROL ALT, DELETE, exec, $term -e '${getExe pkgs.btop}'" # System Monitor
                   "$mainMod CTRL, C, exec, hyprpicker --autocopy --format=hex" # Colour Picker
 
