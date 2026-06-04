@@ -1,5 +1,5 @@
-# Unified nix config — macOS (silicon, germanium) + NixOS (carbon).
-# Three hosts: silicon (x86_64-darwin), germanium (aarch64-darwin), carbon (x86_64-linux).
+# Unified nix config — macOS (germanium) + NixOS (carbon, silicon).
+# Three hosts: germanium (aarch64-darwin), carbon (x86_64-linux), silicon (x86_64-linux — ex-macOS T2 MacBook).
 {
   description = "nix-darwin + NixOS configuration";
 
@@ -82,11 +82,6 @@
     let
       inherit (self) outputs;
 
-      # --- macOS (silicon) — Intel Mac, period 3 ---
-      siliconSystem = "x86_64-darwin";
-      siliconHostname = "silicon";
-      siliconUsername = "chloride";
-
       # --- macOS (germanium) — Apple Silicon, period 4 ---
       germaniumSettings = {
         username = "bromide";
@@ -154,39 +149,6 @@
       };
 
       darwinConfigurations = {
-        # --- silicon (Intel Mac, x86_64-darwin) ---
-        ${siliconHostname} = nix-darwin.lib.darwinSystem {
-          system = siliconSystem;
-          specialArgs = {
-            inherit self inputs;
-            username = siliconUsername;
-            hostname = siliconHostname;
-            terminalFileManager = "yazi";
-            vaultName = "calcium";
-          };
-          modules = [
-            ./hosts/silicon
-            home-manager.darwinModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.backupFileExtension = "bak";
-              home-manager.extraSpecialArgs = {
-                pkgs-stable = import nixpkgs-stable {
-                  system = siliconSystem;
-                  config.allowUnfree = true;
-                };
-              };
-              home-manager.users.${siliconUsername} = {
-                imports = [
-                  sops-nix.homeManagerModules.sops
-                  ./home
-                ];
-              };
-            }
-          ];
-        };
-
         # --- germanium (Apple Silicon, aarch64-darwin, period 4) ---
         germanium = nix-darwin.lib.darwinSystem {
           system = "aarch64-darwin";
