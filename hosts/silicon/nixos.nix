@@ -31,6 +31,7 @@
     ../../modules/programs/shell/bash
     ../../modules/programs/misc/thunar
     ../../modules/programs/misc/nix-ld
+    ../../modules/programs/misc/tlp # laptop power mgmt: CPU governors per AC/BAT (charge thresholds no-op on T2)
     ../../modules/programs/wireproxy # Mullvad WireGuard SOCKS5 proxies for the Firefox profiles
     ../../modules/programs/browser/firefox-profiles # the 4 Mullvad-isolated Firefox profiles
 
@@ -69,6 +70,7 @@
   # mem_sleep_default=s2idle: T2 firmware has no working S3/deep; force modern standby or resume hangs.
   boot.kernelParams = [
     "i915.enable_guc=3"
+    "i915.enable_psr=0" # T2 panel: PSR triggers pipe-A atomic-update failures on resume → black screen until the power button. Off = clean re-modeset.
     "mem_sleep_default=s2idle"
     "modprobe.blacklist=amdgpu" # belt-and-suspenders with boot.blacklistedKernelModules (above)
   ];
@@ -78,6 +80,18 @@
   powerManagement.resumeCommands = ''
     ${pkgs.kmod}/bin/modprobe -r brcmfmac_wcc brcmfmac || true
     ${pkgs.kmod}/bin/modprobe brcmfmac
+
+    # Both USB xHCI host controllers die on s2idle resume ("xhci_hcd: Controller not ready at resume -19;
+    # HC died"), taking the wired USB-ethernet dongle (ASIX AX88179) down until a reboot. Force a clean
+    # re-enumeration: remove every xHCI controller (PCI class 0x0c0330) and rescan the bus so they re-init
+    # from scratch. The internal keyboard/trackpad ride apple-bce (not xHCI), so they stay put.
+    for dev in /sys/bus/pci/devices/*; do
+      if [ "$(cat "$dev/class" 2>/dev/null)" = "0x0c0330" ]; then
+        echo 1 > "$dev/remove" 2>/dev/null || true
+      fi
+    done
+    sleep 2
+    echo 1 > /sys/bus/pci/rescan 2>/dev/null || true
   '';
 
   # Initrd modules to find + mount the btrfs root on the internal NVMe at boot
@@ -103,6 +117,10 @@
     useRoutingFeatures = "client";
   };
   networking.firewall.trustedInterfaces = [ "tailscale0" ];
+
+  # The Apple T2 bridge NIC (enp4s0f1u1, MAC ac:de:48:00:11:22) has nothing on the far end, so
+  # NetworkManager retries "Auto Ethernet" DHCP every ~45s forever, spamming the journal. Ignore it.
+  networking.networkmanager.unmanaged = [ "mac:ac:de:48:00:11:22" ];
 
   # SSH — tailnet + local only (mirrors carbon's posture; not exposed to WAN).
   services.openssh = {
