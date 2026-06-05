@@ -93,7 +93,7 @@
               "$mainMod" = "SUPER";
               "$term" = "${getExe pkgs.${terminal}}";
               "$editor" = "${getExe pkgs.neovim}";
-              "$fileManager" = "$term --class \"terminalFileManager\" -e ${terminalFileManager}";
+              "$fileManager" = "$term --class=terminalFileManager -e ${terminalFileManager}";
               "$browser" = browser;
 
               env = [
@@ -123,7 +123,10 @@
                 #"[workspace special silent] ${terminal}"
 
                 "waybar"
-                "swaync"
+                # swaync is started by its systemd user service (services.swaync →
+                # graphical-session.target.wants). Dropping the exec-once removes a
+                # double-start race ("instance already running" → failed unit on whichever
+                # host loses the race; silicon was the visible casualty). 2026-06-04.
                 "nm-applet --indicator"
                 "wl-clipboard-history -t"
                 "${getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch cliphist store" # clipboard store text data
@@ -228,7 +231,7 @@
                 mouse_move_focuses_monitor = true;
                 swallow_regex = "^(Alacritty|kitty|com\\.mitchellh\\.ghostty)$";
                 enable_swallow = true;
-                vfr = true; # always keep on
+                # vfr = true; # always keep on  -- disabled 2026-06-05: Hyprland 0.55 removed misc:vfr (VFR-on is the default now)
                 vrr = 2; # enable variable refresh rate (0=off, 1=on, 2=fullscreen only, 3 = fullscreen games/media)
               };
               xwayland.force_zero_scaling = false;
@@ -236,7 +239,7 @@
                 "3, horizontal, workspace"
               ];
               dwindle = {
-                pseudotile = true;
+                # pseudotile = true;  -- disabled 2026-06-05: Hyprland 0.55 removed dwindle:pseudotile (use the pseudo dispatcher)
                 preserve_split = true;
               };
               master = {
