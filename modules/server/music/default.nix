@@ -214,6 +214,23 @@ in
             ${pkgs.systemd}/bin/systemctl start --no-block mp3-sync.service
           fi
         ''}"
+        # Morning receipt: push today's AOTD outcome (written by aotd-download to
+        # ~/.briefing/aotd-last.txt) to the phone — a daily "reused / downloaded"
+        # confirmation. Runs only on success: ExecStartPost is skipped when the
+        # script exits non-zero, and those failures are already covered by the
+        # hc-ping dead-man's-switch above. The `+` prefix runs it as root so it
+        # can read the root-only ntfy topic secret shared with server/alerts.
+        # Low priority + distinct title so it reads as an FYI, not an alarm.
+        "+${pkgs.writeShellScript "aotd-receipt" ''
+          body="$(${pkgs.coreutils}/bin/cat /home/${username}/.briefing/aotd-last.txt 2>/dev/null)"
+          [ -n "$body" ] || exit 0
+          ${pkgs.curl}/bin/curl -s -m 10 \
+            -H "Title: ▶ Album of the day" \
+            -H "Priority: low" \
+            -H "Tags: musical_note" \
+            -d "$body" \
+            "$(cat ${config.sops.secrets.ntfy_alert_url.path})" || true
+        ''}"
       ];
       Environment = [
         "HOME=/home/${username}"

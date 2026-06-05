@@ -130,6 +130,10 @@
   services.tailscale = {
     enable = true;
     useRoutingFeatures = "client";
+    # Declarative Tailscale SSH — runs `tailscale set --ssh` on every activation
+    # (module's tailscaled-set unit). Was imperative (`tailscale set --ssh`), which
+    # a `tailscale up` / re-auth would silently drop. 2026-06-04.
+    extraSetFlags = [ "--ssh" ];
   };
 
   networking.firewall.trustedInterfaces = [ "tailscale0" ];
