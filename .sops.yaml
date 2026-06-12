@@ -13,9 +13,11 @@
 keys:
   - &fluoride_carbon age17chsklmd20tfpmc9enx3hws4eed0tkcjy4fq5mcq8w9ggd8kh9lsz254m9
   - &bromide_germanium age15zk95vyfa7wrgqvx6egxc88a66f7tk5m86u864k9le9wgrhxu9ds825x6u
+  - &iodide_tin age1um7zmrhwyfukppwvj079ur2nqjxlmcm94slzjs2jaa5jc3na2pgskqh3vs
 creation_rules:
   - path_regex: secrets/.*\.yaml$
     key_groups:
       - age:
           - *fluoride_carbon
           - *bromide_germanium
+          - *iodide_tin

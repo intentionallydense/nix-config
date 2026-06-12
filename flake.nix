@@ -22,6 +22,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # --- NixOS server (carbon) inputs ---
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
@@ -104,6 +109,12 @@
         kbdVariant = "extd";
         consoleKeymap = "uk";
         vaultName = "magnesium";
+      };
+
+      # --- NixOS (tin) — Hetzner Cloud VPS (x86_64), period 5 ---
+      tinSettings = {
+        username = "iodide";
+        hostname = "tin";
       };
 
       systems = [
@@ -195,6 +206,19 @@
         specialArgs = {
           inherit self inputs outputs;
         } // carbonSettings;
+      };
+
+      # --- NixOS server in the cloud (tin, Hetzner VPS, x86_64) ---
+      nixosConfigurations.tin = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          sops-nix.nixosModules.sops
+          inputs.disko.nixosModules.disko
+          ./hosts/tin/configuration.nix
+        ];
+        specialArgs = {
+          inherit self inputs outputs;
+        } // tinSettings;
       };
     };
 }
