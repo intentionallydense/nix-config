@@ -1,5 +1,6 @@
 {
   pkgs,
+  lib,
   config,
   videoDriver,
   username,
@@ -246,4 +247,18 @@
 
   networking.nameservers = [ "1.1.1.1" "8.8.8.8" "8.8.4.4" ];
 
+  # ===========================================================================
+  # 2026-06-12 — tin migration interim (see docs/tin-migration.md):
+  # tin owns the Soulseek login now; slskd here would duel it for the same
+  # account. AOTD is paused until the Phase-2 automation redo, since
+  # aotd-download hard-requires the local slskd. Unit-level masks (not
+  # services.slskd.enable=false — that would orphan users.users.slskd and
+  # break eval). Remember: pause the AOTD check in healthchecks.io.
+  # ===========================================================================
+  systemd.services.slskd.enable = lib.mkForce false;
+  systemd.services.aotd-download.enable = lib.mkForce false;
+  systemd.timers.aotd-download.enable = lib.mkForce false;
+  systemd.services.aotd-play.enable = lib.mkForce false;
+  systemd.timers.aotd-play.enable = lib.mkForce false;
+  systemd.services.aotd-play-failure.enable = lib.mkForce false;
 }
