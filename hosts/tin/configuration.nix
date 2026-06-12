@@ -31,7 +31,6 @@
     #   overlay) + questionable on a datacenter IP anyway — revisit during the cleanup.
     ../../modules/server/monitoring # Prometheus + Grafana
     ../../modules/server/alerts # ntfy health alerts
-    ../../modules/server/owntracks # location recorder
 
     # NOT imported: power (laptop lid/charge), sunshine (GPU desktop streaming),
     # backup (external SanDisk — retarget to a Storage Box in a follow-up),
