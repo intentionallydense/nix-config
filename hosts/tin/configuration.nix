@@ -27,7 +27,12 @@
     ../../modules/server/books # Calibre-Web (kobo-briefing masked below; kobo-sync is udev-only)
     ../../modules/server/invidious # Invidious + podman companion (port 3001). PR-5736
     #   patch vendored 2026-06-12 (was a live draft-PR fetchpatch that drifted).
-    #   DC-IP viability empirically fine so far — companion handles potoken.
+    #   ⚠ DC-IP result (tested 2026-06-12): potoken GENERATES but fails validation —
+    #   googlevideo returns non-200 for every stream format from the Hetzner IP, so
+    #   playback is dead from here. Service + migrated DB left in place. Fix path:
+    #   set companion's networking.proxy to a wireproxy/Mullvad SOCKS endpoint when
+    #   Sylvia's WG key lands (same key as the slskd plan). Until then Yattee stays
+    #   pointed at carbon's instance.
     ../../modules/server/monitoring # Prometheus + Grafana
     ../../modules/server/alerts # ntfy health alerts
 
