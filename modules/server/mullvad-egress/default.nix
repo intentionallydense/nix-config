@@ -4,9 +4,20 @@
 #
 #   SOCKS5 127.0.0.1:1080 → slskd's Soulseek connection (filesharing shouldn't
 #                           originate from a raw datacenter IP)
-#   HTTP   127.0.0.1:8888 → invidious-companion egress (googlevideo rejects
-#                           Hetzner IPs at the stream-format level — potoken
-#                           validation fails; tested 2026-06-12)
+#   HTTP   127.0.0.1:8888 → invidious-companion egress
+#
+# ⚠ Invidious result (tested 2026-06-12): the HTTP proxy is wired and verified
+# (am.i.mullvad → Zurich), but it does NOT rescue playback. potoken GENERATION
+# succeeds through the tunnel (innertube /player isn't IP-gated), but potoken
+# VALIDATION still gets non-200 from googlevideo — the same failure as the raw
+# Hetzner IP. Google blocks the Mullvad exit range at the CDN layer too. So the
+# proxy is kept (harmless, and the subs feed / channel listing work without a
+# potoken — those return 200), but stream playback stays dead on tin. The only
+# self-host fix left is a logged-in YouTube session (companion's
+# youtube_session.cookies / oauth, throwaway account) — a Phase-2 decision.
+# Yattee stays pointed at carbon's residential-IP instance until then.
+# Companion still routes through the proxy here so we don't *worsen* its IP
+# reputation by leaking the DC IP; flip it off if it ever proves a liability.
 #
 # Private key: sops `wireproxy/tin` — the "Classy Boar" Mullvad device, rotated
 # 2026-06-12 (first key touched chat logs). Address/peer below are per-key /
