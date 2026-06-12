@@ -4,10 +4,15 @@
 # music-shelf is a unified search UI across library and Soulseek.
 # Auto-import watches incoming/ and processes downloads through beets.
 # aotd-download fetches the daily album-of-the-day from the briefing system.
-# Used by: carbon.
-{ pkgs, config, username, ... }:
+# Used by: carbon, tin.
+{ pkgs, lib, config, username, musicLibraryDir, ... }:
 let
-  musicDir = "/home/${username}/music_library";
+  # Per-host via specialArgs (flake.nix *Settings): carbon keeps the legacy
+  # in-$HOME layout (/home/fluoride/music_library); tin uses /srv/media/music.
+  musicDir = musicLibraryDir;
+  # The /home special-casing below (traversal ACLs, ProtectHome punch-through)
+  # only applies when the library actually lives inside a home directory.
+  libraryInHome = lib.hasPrefix "/home/" musicDir;
   scriptsDir = "${musicDir}/scripts";
 
   # Python environment for aotd-download and music-shelf
@@ -43,25 +48,31 @@ in
       Scanner.GroupAlbumReleases = false;
     };
   };
-  # Navidrome and slskd need to read/write fluoride's music dirs
+  # Navidrome and slskd need to read/write the music library
   users.users.navidrome.extraGroups = [ "media" ];
   users.users.slskd.extraGroups = [ "media" ];
 
-  # Both upstream modules set ProtectHome=yes, which hides /home entirely
-  # and breaks access to music dirs. Override to allow access.
-  systemd.services.navidrome.serviceConfig.ProtectHome = pkgs.lib.mkForce false;
-  systemd.services.slskd.serviceConfig.ProtectHome = pkgs.lib.mkForce false;
+  # Both upstream modules set ProtectHome=yes, which hides /home entirely.
+  # Only punch through when the library actually lives in /home (carbon's
+  # legacy layout); with a /srv library the sandboxing stays intact.
+  systemd.services.navidrome.serviceConfig.ProtectHome = lib.mkIf libraryInHome (lib.mkForce false);
+  systemd.services.slskd.serviceConfig.ProtectHome = lib.mkIf libraryInHome (lib.mkForce false);
 
-  # Ensure home dir is traversable by named-user ACL entries (navidrome, slskd).
-  # Mode 0710 (not 0701!) is critical: POSIX ACL aliases the group perm to the
-  # mask, and the mask AND's named-user entries. Mode 0701 would give mask=---,
-  # killing `user:slskd:--x` / `user:navidrome:--x` → services can't traverse.
-  # 0710 gives mask=--x which preserves those entries. Pairs with homeMode="0710"
-  # in hosts/common.nix, which fixes the same problem on the update-users-groups
-  # activation path.
-  systemd.tmpfiles.rules = [
-    "d /home/${username} 0710 ${username} users -"
-  ];
+  systemd.tmpfiles.rules =
+    if libraryInHome then [
+      # Ensure home dir is traversable by named-user ACL entries (navidrome, slskd).
+      # Mode 0710 (not 0701!) is critical: POSIX ACL aliases the group perm to the
+      # mask, and the mask AND's named-user entries. Mode 0701 would give mask=---,
+      # killing `user:slskd:--x` / `user:navidrome:--x` → services can't traverse.
+      # 0710 gives mask=--x which preserves those entries. Pairs with homeMode="0710"
+      # in hosts/common.nix, which fixes the same problem on the update-users-groups
+      # activation path.
+      "d /home/${username} 0710 ${username} users -"
+    ] else [
+      # Library outside /home: no traversal ACLs needed. Setgid media dir so
+      # everything created inside stays group-accessible.
+      "d ${musicDir} 2775 ${username} media -"
+    ];
 
   # --- sops templates: compose secrets into env files for services ---
   sops.templates."slskd-env".content = ''

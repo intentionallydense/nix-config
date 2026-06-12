@@ -109,12 +109,21 @@
         kbdVariant = "extd";
         consoleKeymap = "uk";
         vaultName = "magnesium";
+        # Library roots for modules/server/{music,books} — carbon's libraries
+        # predate the parameterization and live in $HOME (with the 0710 +
+        # named-user-ACL traversal scheme).
+        musicLibraryDir = "/home/fluoride/music_library";
+        bookLibraryDir = "/home/fluoride/book_library";
       };
 
       # --- NixOS (tin) — Hetzner Cloud VPS (x86_64), period 5 ---
       tinSettings = {
         username = "iodide";
         hostname = "tin";
+        # Libraries live outside /home: no ProtectHome punch-through, no
+        # ACL-traversal hack, $HOME stays 0700. Moved 2026-06-12.
+        musicLibraryDir = "/srv/media/music";
+        bookLibraryDir = "/srv/media/books";
       };
 
       systems = [

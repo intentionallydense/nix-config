@@ -2,15 +2,20 @@
 # calibre-web serves the calibre library at :8083 (tailnet-only via firewall)
 # for browsing, uploading from any device, and metadata editing.
 # kobo-sync pushes books tagged 'to-sync' to a Kobo when plugged in via USB.
-# Used by: carbon.
+# Used by: carbon, tin.
 {
   pkgs,
+  lib,
   config,
   username,
+  bookLibraryDir,
   ...
 }:
 let
-  bookDir = "/home/${username}/book_library";
+  # Per-host via specialArgs (flake.nix *Settings): carbon keeps the legacy
+  # in-$HOME layout (/home/fluoride/book_library); tin uses /srv/media/books.
+  bookDir = bookLibraryDir;
+  libraryInHome = lib.hasPrefix "/home/" bookDir;
   # NB: no spaces in this path. systemd splits ReadWritePaths on whitespace,
   # so "Calibre Library" gets truncated and fails namespace setup with
   # `status=226/NAMESPACE`. Calibre doesn't care what the dir is called.
@@ -52,15 +57,21 @@ in
       enableKepubify = true;             # let the web UI's "Send to Kobo" use kepubify too
     };
   };
-  # calibre-web user needs to read/write fluoride's book_library.
+  # calibre-web user needs to read/write the book library.
   # Reuses the existing media group (also used by navidrome/jellyfin/slskd).
   users.users.calibre-web.extraGroups = [ "media" ];
-  # Upstream module sets ProtectHome=yes, which hides /home — breaks library access.
-  # Override matches the same pattern used for navidrome/slskd in modules/server/music.
-  systemd.services.calibre-web.serviceConfig.ProtectHome = pkgs.lib.mkForce false;
-  # Library lives in /home, so ReadWritePaths needs /home explicitly when
-  # ProtectHome is off (systemd refuses to write under /home otherwise).
+  # Upstream module sets ProtectHome=yes, which hides /home — only punch
+  # through when the library actually lives in /home (carbon's legacy layout).
+  # Pattern matches navidrome/slskd in modules/server/music.
+  systemd.services.calibre-web.serviceConfig.ProtectHome = lib.mkIf libraryInHome (lib.mkForce false);
+  # ReadWritePaths needed either way (upstream sandboxing refuses writes
+  # outside its own state dirs otherwise).
   systemd.services.calibre-web.serviceConfig.ReadWritePaths = [ libraryDir ];
+  # Library outside /home: setgid media dir (list is empty on carbon's
+  # in-$HOME layout, where the dir predates the module).
+  systemd.tmpfiles.rules = lib.optionals (!libraryInHome) [
+    "d ${bookDir} 2775 ${username} media -"
+  ];
 
   # --- Library bootstrap ---
   # Upstream calibre-web's ExecStartPre fails fast if metadata.db is absent,

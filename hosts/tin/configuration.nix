@@ -1,7 +1,7 @@
 # tin — Hetzner Cloud VPS (x86_64), Sylvia's home-server-in-the-cloud.
 #
 # Phase 1 scope: the serving stack only (media / music / books / invidious /
-# owntracks / monitoring). The briefing-coupled automation (briefing, AOTD,
+# monitoring). The briefing-coupled automation (briefing, AOTD,
 # overnight-research, publish-blog) stays on carbon for now — it's tied to the
 # Obsidian vault + claude auth, a deliberate Phase-2 follow-up.
 #
@@ -44,11 +44,10 @@
   # ===========================================================================
   users.users.${username} = {
     isNormalUser = true;
-    # 0710 (not 0700) preserves the group --x bit on /home so the POSIX-ACL
-    # named-user entries (user:slskd:--x / user:navidrome:--x) survive every
-    # nixos-rebuild and those services can traverse into ~/music_library.
-    # Same fix as carbon — see modules/server/music and hosts/common.nix.
-    homeMode = "0710";
+    # Libraries live in /srv/media (see flake.nix tinSettings), so no service
+    # ever needs to traverse $HOME — no ACL hack, plain private home. (carbon
+    # still uses the 0710 + named-user-ACL scheme; see modules/server/music.)
+    homeMode = "0700";
     extraGroups = [ "wheel" ]; # "media" is added by modules/server/media
     shell = pkgs.fish;
     openssh.authorizedKeys.keys = [
@@ -180,8 +179,6 @@
   # that ride in via the serving modules — masked so no cron runs on tin yet.
   systemd.services.music-auto-import.enable = lib.mkForce false; # slskd → beets import
   systemd.timers.music-auto-import.enable = lib.mkForce false;
-  systemd.services.owntracks-day.enable = lib.mkForce false; # daily location summary
-  systemd.timers.owntracks-day.enable = lib.mkForce false;
   systemd.services.carbon-alert-check.enable = lib.mkForce false; # health-check ntfy pings
   systemd.timers.carbon-alert-check.enable = lib.mkForce false;
 

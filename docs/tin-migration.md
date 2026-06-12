@@ -66,3 +66,10 @@ re-enable suspend, remove the 80% charge cap and forced fan. Rebuild → it's a 
 ## Masked on tin (ride in via shared modules; intentionally off)
 aotd-play/-download (BT speaker + briefing), kobo-briefing (briefing), music-auto-import,
 owntracks-day, carbon-alert-check (scheduled). mp3-sync/kobo-sync are udev-only (self-gate).
+
+## 2026-06-12 follow-up (afternoon session)
+- `tin` branch committed + merged to `main` (365d6b9, 645d64d); public 22 closed via rebuild; root-over-Tailscale-SSH confirmed as the rebuild path.
+- **owntracks retired** by Sylvia's call — module dropped from tin (3c30e97). carbon's /var/lib/owntracks history dies with its reinstall.
+- **Libraries moved out of $HOME on tin** → /srv/media/{music,books}. modules/server/{music,books} take musicLibraryDir/bookLibraryDir via specialArgs; carbon keeps legacy $HOME paths until teardown. ProtectHome punch-through + 0710/ACL hack now conditional on in-$HOME layout — tin runs fully sandboxed, iodide home 0700, ACLs wiped. /var/lib/navidrome.bak-20260612 kept as pre-move annotation backup.
+- ⚠ Final cutover rsync targets change: carbon:~/music_library/ → tin:/srv/media/music/ ; carbon:~/book_library/ → tin:/srv/media/books/.
+- ⚠ If Jellyfin had a library pointed at /home/iodide/music_library, repoint it in the UI (Dashboard → Libraries).
