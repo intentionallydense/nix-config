@@ -25,10 +25,9 @@
     ../../modules/server/media # Jellyfin + Immich (Sonarr/Radarr/Prowlarr disabled in-module)
     ../../modules/server/music # Navidrome, slskd, music-shelf, auto-import (AOTD masked below)
     ../../modules/server/books # Calibre-Web (kobo-briefing masked below; kobo-sync is udev-only)
-    # ../../modules/server/invidious # DEFERRED 2026-06-11: this module pins a *live*
-    #   GitHub draft-PR patch (iv-org/invidious#5736); the draft moved upstream so the
-    #   fetchpatch hash drifted and broke the build. Fragile (hand-maintained patch
-    #   overlay) + questionable on a datacenter IP anyway — revisit during the cleanup.
+    ../../modules/server/invidious # Invidious + podman companion (port 3001). PR-5736
+    #   patch vendored 2026-06-12 (was a live draft-PR fetchpatch that drifted).
+    #   DC-IP viability empirically fine so far — companion handles potoken.
     ../../modules/server/monitoring # Prometheus + Grafana
     ../../modules/server/alerts # ntfy health alerts
 
@@ -57,6 +56,15 @@
   users.users.root.openssh.authorizedKeys.keys = [
     # carbon's key, for the nixos-anywhere install + first-boot recovery.
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAcyLHliraFUz41modhQ3h60SH+6xZio0x7aJvqas94M fluoride@carbon"
+  ];
+
+  # Migration shim: the music tooling (music-import + siblings, beets config)
+  # predates the /srv/media move and resolves the library via $HOME — on carbon
+  # AND in the library's own scripts/ dir, which final-cutover rsync will keep
+  # overwriting. One symlink keeps it all working verbatim until the Phase-2
+  # script redo makes paths explicit — delete this then.
+  systemd.tmpfiles.rules = [
+    "L+ /home/${username}/music_library - - - - /srv/media/music"
   ];
 
   programs.fish.enable = true;
@@ -173,12 +181,10 @@
   # mp3-sync (Fiio DAP) and kobo-sync (Kobo USB) are udev-triggered only — the
   # devices never appear on a cloud box, so they self-gate. Left as-is.
 
-  # Held back at Sylvia's request: keep tin to pure always-on serving daemons
-  # for now; the scheduled/automation layer (and anything vault/claude-coupled)
-  # gets a clean redo later, not a straight port. These are the remaining timers
-  # that ride in via the serving modules — masked so no cron runs on tin yet.
-  systemd.services.music-auto-import.enable = lib.mkForce false; # slskd → beets import
-  systemd.timers.music-auto-import.enable = lib.mkForce false;
+  # Held back at Sylvia's request: the vault/claude-coupled automation gets a
+  # clean redo later, not a straight port. (music-auto-import was unmasked
+  # 2026-06-12 when tin took over the Soulseek login — it's pure library
+  # plumbing, no vault coupling; see the $HOME migration shim above.)
   systemd.services.carbon-alert-check.enable = lib.mkForce false; # health-check ntfy pings
   systemd.timers.carbon-alert-check.enable = lib.mkForce false;
 

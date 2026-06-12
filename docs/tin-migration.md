@@ -73,3 +73,8 @@ owntracks-day, carbon-alert-check (scheduled). mp3-sync/kobo-sync are udev-only 
 - **Libraries moved out of $HOME on tin** → /srv/media/{music,books}. modules/server/{music,books} take musicLibraryDir/bookLibraryDir via specialArgs; carbon keeps legacy $HOME paths until teardown. ProtectHome punch-through + 0710/ACL hack now conditional on in-$HOME layout — tin runs fully sandboxed, iodide home 0700, ACLs wiped. /var/lib/navidrome.bak-20260612 kept as pre-move annotation backup.
 - ⚠ Final cutover rsync targets change: carbon:~/music_library/ → tin:/srv/media/music/ ; carbon:~/book_library/ → tin:/srv/media/books/.
 - ⚠ If Jellyfin had a library pointed at /home/iodide/music_library, repoint it in the UI (Dashboard → Libraries).
+
+## 2026-06-12 follow-up 2 (slskd handover + invidious)
+- **tin owns the Soulseek login** (betalactamase). carbon: slskd + AOTD unit-masked until Phase-2 redo — Sylvia must pause the AOTD check in healthchecks.io. carbon's slskd queue state (/var/lib/slskd) is abandoned; re-queue stragglers via music-shelf.
+- **music-auto-import unmasked on tin** — full pipeline live (music-shelf → slskd → beets → navidrome). Beets config copied verbatim; `$HOME/music_library → /srv/media/music` symlink shims the path-assuming scripts until the Phase-2 script redo (then delete the shim and make paths explicit).
+- **Invidious unblocked**: PR-5736 patch vendored byte-exact from carbon's store (live draft-PR URL had drifted). Module imported on tin (port 3001); invidious postgres DB migrated from carbon. slskd→Mullvad wireproxy still pending (Sylvia getting a WG key).

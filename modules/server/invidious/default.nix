@@ -29,7 +29,7 @@
 # Note: by upstream default the invidious service restarts every ~1h
 # with ±5min jitter. Intentional, not a problem.
 #
-# Used by: carbon.
+# Used by: carbon, tin.
 { config, pkgs, lib, ... }:
 let
   stateDir = "/var/lib/invidious-companion";
@@ -91,11 +91,13 @@ in
             url = "https://github.com/iv-org/invidious/commit/99390d065d69bb451dea8aedf9a1bbaa52cddf2a.patch";
             hash = "sha256-fFyn00mOrSGygwZycJN6Su0p5ZaKMU/uqYrBFfVM1lQ=";
           })
-          (final.fetchpatch {
-            name = "fix-lockup-video-classification-pr5736.patch";
-            url = "https://github.com/iv-org/invidious/pull/5736.patch";
-            hash = "sha256-wFclJrc+NQqvY6PWwTj6DySSCctx616mL80iDVEOglI=";
-          })
+          # VENDORED 2026-06-12: this was fetchpatch'd from the live PR URL
+          # (github.com/iv-org/invidious/pull/5736.patch), but the draft branch
+          # moved upstream and the hash drifted, breaking fresh builds (this is
+          # what blocked invidious on tin). The file below is the byte-exact
+          # original fetchpatch output (flat sha256-wFclJrc+NQqvY6PWwTj6DySSCc
+          # tx616mL80iDVEOglI=), recovered from carbon's store and committed.
+          ./fix-lockup-video-classification-pr5736.patch
           ./fix-lockup-video-not-upcoming.patch
           ./fix-author-thumbnails-emit-empty.patch
         ];
