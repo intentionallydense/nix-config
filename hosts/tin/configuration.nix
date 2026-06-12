@@ -33,6 +33,7 @@
     #   set companion's networking.proxy to a wireproxy/Mullvad SOCKS endpoint when
     #   Sylvia's WG key lands (same key as the slskd plan). Until then Yattee stays
     #   pointed at carbon's instance.
+    ../../modules/server/mullvad-egress # wireproxy → ch-zrh-wg-005: slskd SOCKS5 + companion HTTP
     ../../modules/server/monitoring # Prometheus + Grafana
     ../../modules/server/alerts # ntfy health alerts
 
