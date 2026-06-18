@@ -7,12 +7,11 @@
 # flake's ${self}/dev-shells), and the `~/NixOS#` rebuild aliases (tin is rebuilt
 # remotely from the flake, not from a local checkout — see the deploy notes).
 #
-# mgchat/mgres are adapted: they read the chat-mode prompt from ~/.config/claude/
-# rather than $OBSIDIAN_VAULT/claude/ (tin has no vault), and that file is seeded
-# out-of-band — NOT committed, since this repo is public and the prompt is
-# personal. Seed it once from a vault machine:
-#   scp ~/Documents/Obsidian/calcium/claude/chat-mode-prompt.md iodide@100.65.236.26:~/.config/claude/
-#   scp ~/Documents/Obsidian/calcium/claude/CODING.md           iodide@100.65.236.26:~/.config/claude/   # for `mgres code`
+# mgchat is adapted: it reads a tin-specific chat-mode prompt from
+# ~/.config/claude/chat-mode-prompt.md rather than $OBSIDIAN_VAULT/claude/ (tin has
+# no vault). That file is seeded out-of-band — NOT committed, since this repo is
+# public and the prompt is personal. Seed it once from a vault machine:
+#   scp ~/Documents/Obsidian/calcium/claude/chat-mode-prompt-tin.md iodide@100.65.236.26:~/.config/claude/chat-mode-prompt.md
 { pkgs, username, ... }:
 {
   # CLI tools the aliases/functions below assume on PATH (bat, nvim, fzf).
@@ -30,14 +29,6 @@
   ];
 
   programs.fish = {
-    shellAbbrs = {
-      # `… G pattern` → `… | grep pattern` (fish equivalent of a zsh global alias)
-      G = {
-        position = "anywhere";
-        expansion = "| grep";
-      };
-    };
-
     shellAliases = {
       cls = "clear";
       tml = "tmux list-sessions";
@@ -67,6 +58,10 @@
     '';
 
     interactiveShellInit = ''
+      # `… G pattern` → `… | grep pattern` — global-style abbr. The NixOS fish
+      # module only accepts string shellAbbrs, so the positional form is set here.
+      abbr -a G --position anywhere -- '| grep'
+
       # tdev — open a tmux dev session (editor + terminal + build)
       function tdev
         set -l session_name (basename "$PWD" | tr '.:' '__')
@@ -92,7 +87,7 @@
         if not test -f $prompt_file
           echo "mgchat: prompt not found at $prompt_file" >&2
           echo "  seed it once from a vault machine:" >&2
-          echo "  scp ~/Documents/Obsidian/calcium/claude/chat-mode-prompt.md iodide@100.65.236.26:~/.config/claude/" >&2
+          echo "  scp ~/Documents/Obsidian/calcium/claude/chat-mode-prompt-tin.md iodide@100.65.236.26:~/.config/claude/chat-mode-prompt.md" >&2
           return 1
         end
         if test -n "$TMUX"
@@ -103,37 +98,6 @@
           tmux attach-session -t mg
         else
           tmux new-session -s mg -c $work_dir "env CLAUDE_CODE_NO_FLICKER=1 claude --system-prompt-file $prompt_file $argv; exec fish"
-        end
-      end
-
-      # mgres — resume the most recent Claude session in the 'mg' tmux session.
-      # Claude doesn't preserve the system prompt across --resume, so it's re-applied.
-      # Usage: mgres (chat|code) [session-id]
-      function mgres
-        set -l prompt_dir "$HOME/.config/claude"
-        set -l work_dir (set -q TIN_WORK_DIR; and echo $TIN_WORK_DIR; or echo $HOME)
-        set -l mode $argv[1]
-        set -l rest $argv[2..]
-        set -l chat_prompt "$prompt_dir/chat-mode-prompt.md"
-        set -l code_prompt "$prompt_dir/CODING.md"
-        set -l prompt_args --system-prompt-file $chat_prompt
-        switch $mode
-          case chat
-            # chat-mode base only
-          case code
-            set -a prompt_args --append-system-prompt-file $code_prompt
-          case '*'
-            echo "usage: mgres (chat|code) [session-id]" >&2
-            return 1
-        end
-        if test -n "$TMUX"
-          cd $work_dir
-          CLAUDE_CODE_NO_FLICKER=1 claude $prompt_args --resume $rest
-        else if tmux has-session -t mg 2>/dev/null
-          tmux new-window -t mg -c $work_dir "env CLAUDE_CODE_NO_FLICKER=1 claude $prompt_args --resume $rest; exec fish"
-          tmux attach-session -t mg
-        else
-          tmux new-session -s mg -c $work_dir "env CLAUDE_CODE_NO_FLICKER=1 claude $prompt_args --resume $rest; exec fish"
         end
       end
     '';
