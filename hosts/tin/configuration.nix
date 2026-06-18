@@ -79,6 +79,16 @@
   security.polkit.enable = true;
   nixpkgs.config.allowUnfree = true;
 
+  # ===========================================================================
+  # Always-on tooling — tin is the fleet's 24/7 box, so a tmux-wrapped `claude`
+  # survives laptop sleep / SSH drops / eduroam flaps; reattach from anywhere
+  # over Tailscale (`tmux new -s claude` → C-a d → `tmux attach -t claude`).
+  # ===========================================================================
+  environment.systemPackages = with pkgs; [
+    claude-code
+    tmux
+  ];
+
   # Locale / time — match carbon.
   time.timeZone = "Europe/London";
   i18n.defaultLocale = "en_GB.UTF-8";
