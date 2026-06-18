@@ -20,6 +20,7 @@
   imports = [
     ./hardware-configuration.nix
     ./disko.nix
+    ./fish.nix # iodide's interactive shell — ported aliases/functions + mgchat/mgres
 
     # --- serving stack (Phase 1) ---
     ../../modules/server/media # Jellyfin + Immich (Sonarr/Radarr/Prowlarr disabled in-module)
