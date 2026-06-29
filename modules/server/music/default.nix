@@ -58,6 +58,15 @@ in
   systemd.services.navidrome.serviceConfig.ProtectHome = lib.mkIf libraryInHome (lib.mkForce false);
   systemd.services.slskd.serviceConfig.ProtectHome = lib.mkIf libraryInHome (lib.mkForce false);
 
+  # slskd's default umask (022) makes downloaded files 0644 / dirs 0755 — group
+  # `media` gets no write bit, so the music-import job (runs as the library owner,
+  # also in `media`) can't clean up or delete files slskd created. The setgid bit
+  # on the library dir already forces group=media; UMask=0002 completes the picture
+  # by making slskd's output group-writable (files 0664, dirs 0775), so the import
+  # pipeline can convert/prune/move freely. NOTE: only affects files slskd creates
+  # *after* this is deployed; pre-existing download dirs keep their old perms.
+  systemd.services.slskd.serviceConfig.UMask = "0002";
+
   systemd.tmpfiles.rules =
     if libraryInHome then [
       # Ensure home dir is traversable by named-user ACL entries (navidrome, slskd).
