@@ -88,7 +88,15 @@
   environment.systemPackages = with pkgs; [
     claude-code
     tmux
+    git # local-flake workflow: tin now builds from ~/nix-config, not github main
   ];
+
+  # Terminfo for every terminal we might SSH in from (ghostty, kitty, foot, …).
+  # Without this, `tmux` fails on attach when TERM is a name ncurses doesn't
+  # ship under that exact spelling — e.g. Ghostty advertises TERM=xterm-ghostty
+  # but ncurses only carries it as `ghostty`, so a non-tmux client couldn't
+  # start tmux here. Cheap (terminfo is tiny); replaces the ~/.terminfo bridge.
+  environment.enableAllTerminfo = true;
 
   # Locale / time — match carbon.
   time.timeZone = "Europe/London";
