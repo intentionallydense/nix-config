@@ -48,6 +48,8 @@ in
     wantedBy = [ "multi-user.target" ];
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
+    # dbus-run-session execs `dbus-daemon` by bare name — it must be on PATH.
+    path = [ pkgs.dbus ];
     environment.HOME = "/home/${username}";
     serviceConfig = {
       ExecStart = obsidianHeadless;
