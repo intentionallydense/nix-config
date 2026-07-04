@@ -2,8 +2,9 @@
 #
 # Phase 1 scope: the serving stack only (media / music / books / invidious /
 # monitoring). The briefing-coupled automation (briefing, AOTD,
-# overnight-research, publish-blog) stays on carbon for now — it's tied to the
-# Obsidian vault + claude auth, a deliberate Phase-2 follow-up.
+# overnight-research, publish-blog) was a deliberate Phase-2 follow-up; Phase 2
+# started 2026-07-04 with the headless-Obsidian vault replica (see
+# modules/server/obsidian-vault) — the automation redo builds on it.
 #
 # Deliberately does NOT import hosts/common.nix: that carries the full Hyprland
 # desktop (sddm, pipewire, bluetooth, printing, X). This box is headless, so it
@@ -37,6 +38,12 @@
     ../../modules/server/mullvad-egress # wireproxy → ch-zrh-wg-005: slskd SOCKS5 + companion HTTP
     ../../modules/server/monitoring # Prometheus + Grafana
     ../../modules/server/alerts # ntfy health alerts
+
+    # --- vault node (Phase 2, first piece — 2026-07-04) ---
+    ../../modules/server/obsidian-vault # headless Obsidian, full-vault Sync replica
+    #   (xvfb :99 + on-demand x11vnc). One-time GUI login pending — see the
+    #   module header for the VNC setup steps. Re-homes the vault-coupled
+    #   automation target from carbon to tin; overnight-research redo comes next.
 
     # NOT imported: power (laptop lid/charge), sunshine (GPU desktop streaming),
     # backup (external SanDisk — retarget to a Storage Box in a follow-up),
