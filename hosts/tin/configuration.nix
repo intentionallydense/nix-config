@@ -112,6 +112,11 @@
     claude-code
     tmux
     git # local-flake workflow: tin now builds from ~/nix-config, not github main
+    # Secrets editing on-box: iodide has a user age key (see .sops.yaml,
+    # ~/.config/sops/age/keys.txt) so plain `sops secrets/secrets.yaml` works.
+    sops
+    age
+    ssh-to-age # host-key fallback: .sops.yaml comment, step "tin root"
   ];
 
   # Terminfo for every terminal we might SSH in from (ghostty, kitty, foot, …).

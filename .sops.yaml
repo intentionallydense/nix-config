@@ -17,11 +17,15 @@
 keys:
   - &fluoride_carbon age17chsklmd20tfpmc9enx3hws4eed0tkcjy4fq5mcq8w9ggd8kh9lsz254m9
   - &bromide_germanium age15zk95vyfa7wrgqvx6egxc88a66f7tk5m86u864k9le9wgrhxu9ds825x6u
-  - &iodide_tin age1um7zmrhwyfukppwvj079ur2nqjxlmcm94slzjs2jaa5jc3na2pgskqh3vs
+  # tin's HOST ssh key (root-only decrypt; what sops-nix uses at activation)
+  - &tin_host age1um7zmrhwyfukppwvj079ur2nqjxlmcm94slzjs2jaa5jc3na2pgskqh3vs
+  # iodide's user age key on tin (plain age-keygen, ~/.config/sops/age/keys.txt)
+  - &iodide_tin age1cek3xedtkdrdqy3tqd8txrjy00xhu4eukl6ct8upusck6mlhlemqdwvlkr
 creation_rules:
   - path_regex: secrets/.*\.yaml$
     key_groups:
       - age:
           - *fluoride_carbon
           - *bromide_germanium
+          - *tin_host
           - *iodide_tin
