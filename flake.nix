@@ -1,5 +1,7 @@
-# Unified nix config — macOS (silicon, germanium) + NixOS (carbon).
-# Three hosts: silicon (x86_64-darwin), germanium (aarch64-darwin), carbon (x86_64-linux).
+# Unified nix config — NixOS fleet: carbon + tin (x86_64-linux), silicon
+# (x86_64-linux, real config on the silicon-nixos branch; the darwin entry here
+# is dead legacy pending the branch fold-in).
+# germanium (macOS) was de-nixed 2026-07-04 — see docs/germanium-denix.md.
 {
   description = "nix-darwin + NixOS configuration";
 
@@ -81,16 +83,8 @@
       siliconHostname = "silicon";
       siliconUsername = "chloride";
 
-      # --- macOS (germanium) — Apple Silicon, period 4 ---
-      germaniumSettings = {
-        username = "bromide";
-        hostname = "germanium";
-        editor = "nvim";
-        browser = "firefox";
-        terminal = "ghostty";
-        terminalFileManager = "yazi";
-        vaultName = "calcium";
-      };
+      # germanium (M4 Pro, aarch64-darwin) was de-nixed 2026-07-04 — plain macOS
+      # + Homebrew now. See docs/germanium-denix.md for where everything went.
 
       # --- NixOS (carbon) ---
       carbonSettings = {
@@ -175,34 +169,8 @@
           ];
         };
 
-        # --- germanium (Apple Silicon, aarch64-darwin, period 4) ---
-        germanium = nix-darwin.lib.darwinSystem {
-          system = "aarch64-darwin";
-          specialArgs = {
-            inherit self inputs outputs;
-          } // germaniumSettings;
-          modules = [
-            ./hosts/germanium/configuration.nix
-            home-manager.darwinModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.backupFileExtension = "bak";
-              home-manager.extraSpecialArgs = {
-                pkgs-stable = import nixpkgs-stable {
-                  system = "aarch64-darwin";
-                  config.allowUnfree = true;
-                };
-              };
-              home-manager.users.${germaniumSettings.username} = {
-                imports = [
-                  sops-nix.homeManagerModules.sops
-                  ./home
-                ];
-              };
-            }
-          ];
-        };
+        # germanium retired 2026-07-04 (de-nixed to plain macOS + Homebrew).
+        # Last building config: commit bd57ba1. docs/germanium-denix.md has the map.
       };
 
       # --- NixOS server ---

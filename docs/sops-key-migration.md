@@ -3,6 +3,12 @@
 **Status:** drafted 2026-06-03 — *NOT yet executed*. This is a reference plan to
 run later (ideally when folding `silicon-nixos` back into `main`).
 
+> **Update 2026-07-04 (germanium de-nixed):** germanium no longer does *runtime*
+> sops decryption at all — its wireproxy configs are static plain files now
+> (see `germanium-denix.md`). This simplifies the plan: germanium is
+> editing-only via the admin key; `macs.yaml`'s only runtime recipient is
+> silicon; germanium's own key (`age15zk95…`) is no longer needed for anything.
+
 ## Why this exists
 
 The `silicon-nixos` branch re-keyed `secrets/secrets.yaml`: converting the Intel
