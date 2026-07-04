@@ -6,8 +6,10 @@
 # Design notes:
 # - Obsidian is Electron; no headless mode exists. It runs under xvfb-run on a
 #   fixed display (:99) so the on-demand VNC unit can attach for GUI sessions.
-#   xvfb-run also gives the display an auth cookie — do NOT swap this for a
-#   bare Xvfb unit (cookieless X lets any local user read the display).
+#   Honesty note: this xvfb-run variant creates an auth cookie but does NOT
+#   pass -auth to Xvfb, so :99 accepts any local connection. Tolerated: the
+#   box is single-tenant, and the service users are PrivateTmp-sandboxed away
+#   from the /tmp/.X11-unix socket. Revisit if tin ever grows real users.
 # - Sylvia accepted the full-vault-on-Hetzner exposure explicitly (2026-07-04):
 #   whole vault, not a selective-sync subset. Vault path: ~/vault (0700 home).
 # - One-time GUI setup (after first deploy):
@@ -67,8 +69,9 @@ in
     requires = [ "obsidian.service" ];
     environment.HOME = "/home/${username}";
     serviceConfig = {
-      # -auth guess finds xvfb-run's cookie; works because we run as the same user.
-      ExecStart = "${pkgs.x11vnc}/bin/x11vnc -display :99 -auth guess -forever -shared -nopw";
+      # No -auth: Xvfb on :99 runs cookieless (see header note), and -auth guess
+      # breaks in the sparse unit PATH (shells out to awk/netstat).
+      ExecStart = "${pkgs.x11vnc}/bin/x11vnc -display :99 -forever -shared -nopw";
       User = username;
     };
   };
