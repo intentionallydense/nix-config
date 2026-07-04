@@ -46,6 +46,12 @@ in
       # Group strictly by (album, albumartist). Cost: multi-disc box sets won't
       # be visually grouped — fine for this library, which is mostly mp3 albums.
       Scanner.GroupAlbumReleases = false;
+      # When files disappear (dedupe, re-tag renames, deletions), Navidrome
+      # only flags their entries "missing" — they linger as ghost/empty albums
+      # forever (default PurgeMissing = "never"). "full" purges them on every
+      # FULL scan (admin UI → Full Scan), keeping quick 5-min scans harmless:
+      # a transiently unreadable library can't wipe play counts/ratings.
+      Scanner.PurgeMissing = "full";
     };
   };
   # Navidrome and slskd need to read/write the music library
@@ -193,7 +199,15 @@ in
         "HOME=/home/${username}"
         "PATH=/run/current-system/sw/bin"
       ];
-      EnvironmentFile = config.sops.templates."mp3-sync-env".path;
+      # mp3-sync-env: Navidrome creds for the star-new-albums step.
+      # slskd-env: SLSKD_API_KEY for the per-album import gate — music-import
+      #   asks slskd which incoming/ dirs still have active transfers and
+      #   imports only quiescent albums, instead of the old global-mtime gate
+      #   that let one live download starve every finished album (2026-07-03).
+      EnvironmentFile = [
+        config.sops.templates."mp3-sync-env".path
+        config.sops.templates."slskd-env".path
+      ];
     };
   };
   systemd.timers.music-auto-import = {
