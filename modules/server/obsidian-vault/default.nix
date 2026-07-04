@@ -20,9 +20,10 @@
 #                   (images/audio/video/PDF/other + vault config) — this is a
 #                   full replica, not a notes-only mirror.
 #     4. tin:       systemctl stop obsidian-vnc
-# - VNC is -nopw on 0.0.0.0: house posture ("the firewall is the gate, not the
-#   bind address") — only tailscale0 is trusted, public NIC exposes nothing.
-#   It's also manual-start only (no wantedBy), so it's normally not running.
+# - VNC binds 0.0.0.0: house posture ("the firewall is the gate, not the bind
+#   address") — only tailscale0 is trusted, public NIC exposes nothing. VNC
+#   password "obsidian" (client-appeasement only, see below). Manual-start
+#   only (no wantedBy), so it's normally not running.
 # - No sync-health watchdog yet: Restart=always covers crashes, but a wedged
 #   sync is invisible. Wire a real check (last-sync introspection → ntfy) when
 #   overnight-research lands, since that's the first thing that'll care.
@@ -71,7 +72,10 @@ in
     serviceConfig = {
       # No -auth: Xvfb on :99 runs cookieless (see header note), and -auth guess
       # breaks in the sparse unit PATH (shells out to awk/netstat).
-      ExecStart = "${pkgs.x11vnc}/bin/x11vnc -display :99 -forever -shared -nopw";
+      # The VNC password is NOT a security boundary (the tailnet gate is) — it
+      # exists only because macOS Screen Sharing refuses SecurityType=None.
+      # Plaintext in the store/ps is accepted on this single-tenant box.
+      ExecStart = "${pkgs.x11vnc}/bin/x11vnc -display :99 -forever -shared -passwd obsidian";
       User = username;
     };
   };
