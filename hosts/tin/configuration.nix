@@ -1,10 +1,11 @@
 # tin — Hetzner Cloud VPS (x86_64), Sylvia's home-server-in-the-cloud.
 #
-# Phase 1 scope: the serving stack only (media / music / books / invidious /
-# monitoring). The briefing-coupled automation (briefing, AOTD,
-# overnight-research, publish-blog) was a deliberate Phase-2 follow-up; Phase 2
-# started 2026-07-04 with the headless-Obsidian vault replica (see
-# modules/server/obsidian-vault) — the automation redo builds on it.
+# Scope: a lean serving stack — Immich (photos) / music / books / monitoring —
+# plus the Phase-2 vault node. Jellyfin + Invidious removed 2026-07-02. The
+# briefing-coupled automation (briefing, AOTD, overnight-research, publish-blog)
+# was a deliberate Phase-2 follow-up; Phase 2 started 2026-07-04 with the
+# headless-Obsidian vault replica (see modules/server/obsidian-vault) — the
+# automation redo builds on it.
 #
 # Deliberately does NOT import hosts/common.nix: that carries the full Hyprland
 # desktop (sddm, pipewire, bluetooth, printing, X). This box is headless, so it
@@ -23,19 +24,16 @@
     ./disko.nix
     ./fish.nix # iodide's interactive shell — ported aliases/functions + mgchat/mgres
 
-    # --- serving stack (Phase 1) ---
-    ../../modules/server/media # Jellyfin + Immich (Sonarr/Radarr/Prowlarr disabled in-module)
+    # --- serving stack ---
+    # NB: Immich is inlined in the base below (services.immich), NOT via the
+    # shared modules/server/media module — that module bundles Jellyfin + *arr,
+    # which tin deliberately does not run. Jellyfin removed 2026-07-02.
     ../../modules/server/music # Navidrome, slskd, music-shelf, auto-import (AOTD masked below)
     ../../modules/server/books # Calibre-Web (kobo-briefing masked below; kobo-sync is udev-only)
-    ../../modules/server/invidious # Invidious + podman companion (port 3001). PR-5736
-    #   patch vendored 2026-06-12 (was a live draft-PR fetchpatch that drifted).
-    #   ⚠ DC-IP result (tested 2026-06-12): potoken GENERATES but fails validation —
-    #   googlevideo returns non-200 for every stream format from the Hetzner IP, so
-    #   playback is dead from here. Service + migrated DB left in place. Fix path:
-    #   set companion's networking.proxy to a wireproxy/Mullvad SOCKS endpoint when
-    #   Sylvia's WG key lands (same key as the slskd plan). Until then Yattee stays
-    #   pointed at carbon's instance.
-    ../../modules/server/mullvad-egress # wireproxy → ch-zrh-wg-005: slskd SOCKS5 + companion HTTP
+    # Invidious removed 2026-07-02 — playback was dead from the Hetzner DC IP
+    # (googlevideo blocks the range); Yattee stays pointed at carbon's instance.
+    # The invidious postgres DB is left on disk (not dropped).
+    ../../modules/server/mullvad-egress # wireproxy → ch-zrh-wg-005: slskd SOCKS5
     ../../modules/server/monitoring # Prometheus + Grafana
     ../../modules/server/alerts # ntfy health alerts
 
@@ -61,7 +59,7 @@
     # ever needs to traverse $HOME — no ACL hack, plain private home. (carbon
     # still uses the 0710 + named-user-ACL scheme; see modules/server/music.)
     homeMode = "0700";
-    extraGroups = [ "wheel" ]; # "media" is added by modules/server/media
+    extraGroups = [ "wheel" "media" ]; # media group defined below (was: modules/server/media)
     shell = pkgs.fish;
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAcyLHliraFUz41modhQ3h60SH+6xZio0x7aJvqas94M fluoride@carbon"
@@ -71,6 +69,24 @@
     # carbon's key, for the nixos-anywhere install + first-boot recovery.
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAcyLHliraFUz41modhQ3h60SH+6xZio0x7aJvqas94M fluoride@carbon"
   ];
+
+  # ===========================================================================
+  # Immich — self-hosted photos (port 2283). Inlined here instead of via the
+  # shared modules/server/media module, which also carries Jellyfin + *arr that
+  # tin doesn't run. Config is byte-for-byte what the media module set.
+  # ===========================================================================
+  services.immich = {
+    enable = true;
+    openFirewall = false; # tailnet-only via trustedInterfaces (closes 2283 on LAN; the
+                          # random worker port was never opened, so it's gated too)
+    host = "0.0.0.0"; # Bind all interfaces so tailscale0 reaches it; firewall gates LAN/WAN
+    machine-learning.enable = true; # Smart search, face recognition, object detection
+  };
+
+  # Shared media group — the music (navidrome, slskd) and books (calibre-web)
+  # modules add their service users to this group for the /srv/media libraries.
+  # Formerly defined in modules/server/media, which tin no longer imports.
+  users.groups.media = { };
 
   # Migration shim: the music tooling (music-import + siblings, beets config)
   # predates the /srv/media move and resolves the library via $HOME — on carbon
@@ -95,7 +111,15 @@
   environment.systemPackages = with pkgs; [
     claude-code
     tmux
+    git # local-flake workflow: tin now builds from ~/nix-config, not github main
   ];
+
+  # Terminfo for every terminal we might SSH in from (ghostty, kitty, foot, …).
+  # Without this, `tmux` fails on attach when TERM is a name ncurses doesn't
+  # ship under that exact spelling — e.g. Ghostty advertises TERM=xterm-ghostty
+  # but ncurses only carries it as `ghostty`, so a non-tmux client couldn't
+  # start tmux here. Cheap (terminfo is tiny); replaces the ~/.terminfo bridge.
+  environment.enableAllTerminfo = true;
 
   # Locale / time — match carbon.
   time.timeZone = "Europe/London";

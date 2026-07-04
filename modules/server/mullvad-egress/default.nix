@@ -1,23 +1,12 @@
 # Mullvad egress for tin's IP-sensitive traffic. wireproxy (userspace WireGuard —
 # no kernel interface, no routing-table changes, nothing else on the box is
-# affected) exposes two local proxies from one tunnel:
+# affected) exposes a local SOCKS5 proxy from one tunnel:
 #
 #   SOCKS5 127.0.0.1:1080 → slskd's Soulseek connection (filesharing shouldn't
 #                           originate from a raw datacenter IP)
-#   HTTP   127.0.0.1:8888 → invidious-companion egress
 #
-# ⚠ Invidious result (tested 2026-06-12): the HTTP proxy is wired and verified
-# (am.i.mullvad → Zurich), but it does NOT rescue playback. potoken GENERATION
-# succeeds through the tunnel (innertube /player isn't IP-gated), but potoken
-# VALIDATION still gets non-200 from googlevideo — the same failure as the raw
-# Hetzner IP. Google blocks the Mullvad exit range at the CDN layer too. So the
-# proxy is kept (harmless, and the subs feed / channel listing work without a
-# potoken — those return 200), but stream playback stays dead on tin. The only
-# self-host fix left is a logged-in YouTube session (companion's
-# youtube_session.cookies / oauth, throwaway account) — a Phase-2 decision.
-# Yattee stays pointed at carbon's residential-IP instance until then.
-# Companion still routes through the proxy here so we don't *worsen* its IP
-# reputation by leaking the DC IP; flip it off if it ever proves a liability.
+# (The HTTP proxy for invidious-companion was removed 2026-07-02 along with
+# Invidious itself — playback was dead from the Hetzner DC IP regardless.)
 #
 # Private key: sops `wireproxy/tin` — the "Classy Boar" Mullvad device, rotated
 # 2026-06-12 (first key touched chat logs). Address/peer below are per-key /
@@ -34,8 +23,8 @@
 # mechanism. NB slskd has been observed not to retry logins aggressively; if
 # the tunnel bounces, `systemctl restart slskd`.
 #
-# Used by: tin (assumes modules/server/music + modules/server/invidious are
-# imported — it reaches into slskd settings and the companion container).
+# Used by: tin (assumes modules/server/music is imported — it reaches into
+# slskd's settings to force its Soulseek connection through the SOCKS5 proxy).
 { pkgs, lib, ... }:
 let
   tunnel = {
@@ -47,7 +36,6 @@ let
     exit = "ch-zrh-wg-005 (Zurich, CH)";
   };
   socksPort = 1080;
-  httpPort = 8888;
 
   # Render the config (with the sops-decrypted key) into the unit's private
   # RuntimeDirectory, then exec wireproxy. Same pattern as the silicon-nixos
@@ -75,9 +63,6 @@ let
       "" \
       "[Socks5]" \
       "BindAddress = 127.0.0.1:${toString socksPort}" \
-      "" \
-      "[http]" \
-      "BindAddress = 127.0.0.1:${toString httpPort}" \
       > "$conf"
     exec ${pkgs.wireproxy}/bin/wireproxy -c "$conf"
   '';
@@ -86,7 +71,7 @@ in
   sops.secrets."wireproxy/tin" = { }; # root-only; the launcher reads it
 
   systemd.services.wireproxy-mullvad = {
-    description = "wireproxy: Mullvad egress via ${tunnel.exit} (SOCKS5 :${toString socksPort}, HTTP :${toString httpPort})";
+    description = "wireproxy: Mullvad egress via ${tunnel.exit} (SOCKS5 :${toString socksPort})";
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
     wantedBy = [ "multi-user.target" ];
@@ -111,28 +96,6 @@ in
     port = socksPort;
   };
   systemd.services.slskd = {
-    after = [ "wireproxy-mullvad.service" ];
-    wants = [ "wireproxy-mullvad.service" ];
-  };
-
-  # --- invidious-companion: YouTube egress through the tunnel (HTTP) ---
-  # Host networking so the container can reach the host-loopback proxy;
-  # companion then binds host 127.0.0.1:8282 directly (loopback-only, same
-  # exposure as the old bridge + port-map posture).
-  virtualisation.oci-containers.containers.invidious-companion = {
-    ports = lib.mkForce [ ];
-    extraOptions = [ "--network=host" ];
-    environment = {
-      HOST = lib.mkForce "127.0.0.1";
-      # Companion's config reads bare `PROXY` (explicit Deno.env.get) — the
-      # NETWORKING_* spelling is set too in case the mapping changes upstream;
-      # whichever is unknown gets ignored. Verify in the container's startup
-      # "Loaded Configuration" dump: networking.proxy must show this URL.
-      PROXY = "http://127.0.0.1:${toString httpPort}";
-      NETWORKING_PROXY = "http://127.0.0.1:${toString httpPort}";
-    };
-  };
-  systemd.services.podman-invidious-companion = {
     after = [ "wireproxy-mullvad.service" ];
     wants = [ "wireproxy-mullvad.service" ];
   };
