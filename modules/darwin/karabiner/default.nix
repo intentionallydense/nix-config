@@ -60,6 +60,35 @@
                       }
                     ];
                   }
+                  {
+                    # Sneak/shift-click on an easy pinky key for MCSR. 1:1 remap
+                    # (legal for ranked). Scoped to the game's java process only:
+                    # Prism-managed runtimes live under PrismLauncher/java/, the
+                    # Homebrew JDK matches openjdk@21. NB: in-game `grave` binds
+                    # (currently playerlist) become unreachable while this is active.
+                    description = "Backtick → Shift while Minecraft is frontmost";
+                    manipulators = [
+                      {
+                        type = "basic";
+                        from = {
+                          key_code = "grave_accent_and_tilde";
+                          modifiers.optional = [ "any" ];
+                        };
+                        to = [
+                          { key_code = "left_shift"; }
+                        ];
+                        conditions = [
+                          {
+                            type = "frontmost_application_if";
+                            file_paths = [
+                              "PrismLauncher/java/.*/bin/java"
+                              "openjdk@21/.*/bin/java"
+                            ];
+                          }
+                        ];
+                      }
+                    ];
+                  }
                 ];
               };
               devices = [ ];

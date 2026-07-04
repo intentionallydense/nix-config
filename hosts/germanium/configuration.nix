@@ -13,6 +13,7 @@
     ../../modules/home # Shared home-manager modules (starship, tmux, zsh, etc.)
     ../../modules/darwin/aerospace
     ../../modules/darwin/karabiner
+    ../../modules/darwin/hammerspoon # Minecraft: scroll wheel -> render distance (F3+F / F3+Shift+F)
     ../../modules/darwin/wireproxy # Mullvad WireGuard SOCKS5 proxies for Firefox profiles
   ];
 
@@ -80,7 +81,7 @@
   # --- Homebrew (mirrors silicon, minus virtualbox — no ARM support) ---
   homebrew = {
     enable = true;
-    onActivation.cleanup = "zap";
+    onActivation.cleanup = "none"; # was "zap"; brew 5.1.x requires --force-cleanup that this nix-darwin doesn't pass yet — flip back once nix-darwin catches up
     taps = [
       "nikitabobko/tap" # AeroSpace tiling WM
       "athevon/tokeneater" # TokenEater menu-bar Claude usage monitor
@@ -118,6 +119,7 @@
 
       # Utilities
       "linearmouse"
+      "hammerspoon" # Lua automation: Minecraft scroll -> render distance (modules/darwin/hammerspoon)
       "mullvad-vpn"
       "tailscale"
       "selfcontrol"
@@ -179,7 +181,7 @@
     };
 
     trackpad = {
-      Clicking = true; # Tap to click (laptop preference)
+      Clicking = false; # Tap-to-click OFF
       TrackpadRightClick = true;
       TrackpadThreeFingerDrag = true; # Three-finger drag to move windows
     };
