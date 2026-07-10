@@ -36,6 +36,9 @@
     ../../modules/server/mullvad-egress # wireproxy → ch-zrh-wg-005: slskd SOCKS5
     ../../modules/server/monitoring # Prometheus + Grafana
     ../../modules/server/alerts # ntfy health alerts
+    ../../modules/server/matrix # Synapse + mautrix-signal on intentiondense.net
+    #   ⚠ opens 80/443 on the public NIC (the deliberate tailnet-only exception
+    #   — approved 2026-07-06 for the watchOS client; see module header)
 
     # --- vault node (Phase 2, first piece — 2026-07-04) ---
     ../../modules/server/obsidian-vault # headless Obsidian, full-vault Sync replica
@@ -179,8 +182,11 @@
   # carbon's posture: services bind 0.0.0.0 but only tailscale0 is trusted, so
   # everything is tailnet-only. The firewall is the gate, not the bind address.
   networking.firewall.trustedInterfaces = [ "tailscale0" ];
-  # No allowedTCPPorts: tin is on the tailnet now, so SSH (and everything else)
-  # is reachable only over tailscale0 — the public NIC exposes nothing but ICMP.
+  # No allowedTCPPorts HERE: SSH and all serving-stack services are reachable
+  # only over tailscale0. The single public exception is 80/443, opened by
+  # modules/server/matrix (2026-07-06) so the watchOS Matrix client can reach
+  # Synapse from outside the tailnet — nginx there serves ONLY the Matrix
+  # client API + well-known; everything else stays tailnet-gated.
   # (Bootstrap briefly opened 22 here for the nixos-anywhere install; removed
   # 2026-06-12 once `tailscale status` showed tin connected.)
 
@@ -206,6 +212,14 @@
     secrets.grafana_secret_key = {
       owner = "grafana";
     };
+    # Synapse reads this at startup (registration_shared_secret_path) — only
+    # ever used out-of-band by register_new_matrix_user; registration is closed.
+    secrets.synapse_registration_secret = {
+      owner = "matrix-synapse";
+    };
+    # env-file (KEY=value) with the bridge's E2EE pickle key; read by systemd
+    # as root (EnvironmentFile), so default root ownership is right.
+    secrets.mautrix_signal_env = { };
     secrets.navidrome_user = { };
     secrets.navidrome_pass = { };
     secrets.slskd_api_key = { };
