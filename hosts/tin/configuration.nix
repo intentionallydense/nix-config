@@ -126,6 +126,9 @@
     sops
     age
     ssh-to-age # host-key fallback: .sops.yaml comment, step "tin root"
+    uv # research driver: uv-run eval scripts in ~/projects (needs nix-ld for
+    #    its managed CPythons). Replaces the interim `nix profile install` —
+    #    run `nix profile remove uv` after the rebuild that lands this.
   ];
 
   # Terminfo for every terminal we might SSH in from (ghostty, kitty, foot, …).
