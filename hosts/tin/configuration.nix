@@ -46,6 +46,12 @@
     #   module header for the VNC setup steps. Re-homes the vault-coupled
     #   automation target from carbon to tin; overnight-research redo comes next.
 
+    # --- dev ergonomics ---
+    ../../modules/programs/misc/nix-ld # real ELF loader for foreign binaries —
+    #   without it /lib64/ld-linux-x86-64.so.2 is the stub-ld and VS Code
+    #   Remote-SSH's vscode-server node can't exec (added 2026-07-08; carbon
+    #   already imports this)
+
     # NOT imported: power (laptop lid/charge), sunshine (GPU desktop streaming),
     # backup (external SanDisk — retarget to a Storage Box in a follow-up),
     # briefing (Phase 2), the desktop modules, and common.nix (desktop base).
