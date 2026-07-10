@@ -1,68 +1,45 @@
 # nix-config
 
-Unified Nix flake managing three hosts across macOS and NixOS.
+NixOS flake for **tin** — a Hetzner Cloud VPS (x86_64-linux) serving a personal
+media/photo/matrix stack, reachable tailnet-only.
 
-| Host | System | Platform | User |
-|------|--------|----------|------|
-| silicon | x86_64-darwin | Intel Mac | chloride |
-| germanium | aarch64-darwin | Apple Silicon Mac | bromide |
-| carbon | x86_64-linux | NixOS server | fluoride |
+This repo used to manage a multi-host fleet (carbon, silicon, germanium); that
+layout is preserved at the [`fleet-final`](../../tree/fleet-final) tag. Naming
+follows the periodic table: hosts are group 14, usernames are group 17 halides.
 
-Naming follows the periodic table: hosts are group 14, usernames are group 17
-halides, SSH aliases are group 15 pnictogens.
+## What runs here
+
+- **Immich** — photo library (inlined in `configuration.nix`)
+- **Navidrome / slskd / music-shelf** — music streaming, Soulseek (egress via
+  Mullvad wireproxy), search UI (`modules/music`, `modules/mullvad-egress`)
+- **Calibre-Web** — books (`modules/books`)
+- **Synapse + mautrix-signal** — Matrix homeserver + Signal bridge; the one
+  service exposed on the public NIC, 80/443 (`modules/matrix`)
+- **Prometheus + Grafana** — monitoring (`modules/monitoring`)
+- **Headless Obsidian** — vault Sync replica on Xvfb (`modules/obsidian-vault`)
 
 ## Structure
 
 ```
-flake.nix              Entry point
-hosts/                 Per-host config (silicon, germanium, carbon)
-home/                  macOS-only home-manager (fish extensions, sops, ssh)
-modules/
-  home/                Shared home-manager modules (fish, git, tmux, ghostty, cli tools, ...)
-  darwin/              macOS-only (aerospace, karabiner, sketchybar)
-  desktop/             NixOS desktop environments (Hyprland, i3, GNOME)
-  hardware/            NixOS hardware (GPU, drives)
-  programs/            NixOS programs (browsers, editors, media)
-  scripts/             Shell scripts
-  themes/              GTK/QT theming (Catppuccin)
-overlays/              Custom overlays
-pkgs/                  Custom derivations
-secrets/               sops-encrypted secrets
+flake.nix                    Inputs: nixpkgs, sops-nix, disko
+configuration.nix            Host config (lean headless base; no home-manager)
+hardware-configuration.nix   Hetzner KVM/virtio
+disko.nix                    Disk layout (applied by nixos-anywhere at install)
+fish.nix                     Interactive shell, system-level
+modules/                     One directory per service (+ nix-ld)
+scripts/                     Auxiliary scripts (vast.ai onstart)
+secrets/secrets.yaml         sops-encrypted (age); .sops.yaml has recipients
+docs/                        tin migration notes
 ```
 
-## Usage
+## Deploying
 
-**macOS (nix-darwin):**
-```sh
-darwin-rebuild switch --flake .#silicon    # Intel Mac
-darwin-rebuild switch --flake .#germanium  # Apple Silicon
+Built on tin itself:
+
+```
+sudo nixos-rebuild switch --flake .#tin
 ```
 
-**NixOS:**
-```sh
-sudo nixos-rebuild switch --flake .#carbon
-```
-
-## Key details
-
-- **Fish** is the default shell on all hosts
-- **Ghostty** is the terminal everywhere (homebrew cask on macOS, nixpkgs on NixOS)
-- **Catppuccin Mocha** theming throughout (Ghostty, tmux, btop, lazygit, GTK/QT)
-- **AeroSpace** tiling WM on macOS with SketchyBar workspace indicators
-- **Hyprland** on NixOS
-- Shared modules in `modules/home/` use `home-manager.sharedModules` so they work
-  identically on both nix-darwin and NixOS
-- Secrets managed with [sops-nix](https://github.com/Mic92/sops-nix), encrypted
-  with an age key derived from the SSH ed25519 key
-
-## Keybindings
-
-AeroSpace has a built-in cheatsheet: `cmd-shift-i`. The source is at
-`modules/darwin/aerospace/scripts/keybinds.sh`.
-
-Tmux uses `ctrl-a` as prefix. Hyprland uses `Super` as the main modifier.
-All three use vim-style `hjkl` navigation.
-
-## Credits
-
-NixOS desktop config forked from [Sly-Harvey/NixOS](https://github.com/Sly-Harvey/NixOS).
+Secrets decrypt at activation via the host SSH key
+(`/etc/ssh/ssh_host_ed25519_key` → age). On-box editing works with a user age
+key in `~/.config/sops/age/keys.txt` (`sops secrets/secrets.yaml`).
