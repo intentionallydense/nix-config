@@ -131,6 +131,30 @@
     #    run `nix profile remove uv` after the rebuild that lands this.
   ];
 
+  # Claude Code Remote Control — lets Sylvia start/drive Claude Code sessions
+  # on tin from the Claude mobile app / claude.ai/code. Outbound-HTTPS-only
+  # (no inbound ports; independent of Tailscale). Auth is the claude.ai OAuth
+  # token in ~/.claude/.credentials.json (per-user state, not in this repo).
+  # NB: the server refuses to start if ANTHROPIC_BASE_URL is set — keep any
+  # alt-model wrappers (e.g. the `kimi` fish function) invocation-scoped.
+  systemd.services.claude-remote-control = {
+    description = "Claude Code Remote Control (claude.ai/code <-> tin)";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+    # Remote sessions run real work here — give them the full system toolset,
+    # same as an interactive login would see.
+    path = [ "/run/current-system/sw" ];
+    serviceConfig = {
+      User = username;
+      WorkingDirectory = "/home/${username}";
+      ExecStart = "${pkgs.claude-code}/bin/claude remote-control --name tin";
+      # The process exits by design after ~10 min offline; always come back.
+      Restart = "always";
+      RestartSec = "15s";
+    };
+  };
+
   # Terminfo for every terminal we might SSH in from (ghostty, kitty, foot, …).
   # Without this, `tmux` fails on attach when TERM is a name ncurses doesn't
   # ship under that exact spelling — e.g. Ghostty advertises TERM=xterm-ghostty
