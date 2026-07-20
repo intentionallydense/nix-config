@@ -3,8 +3,9 @@
 # slskd provides headless Soulseek access for downloading.
 # music-shelf is a unified search UI across library and Soulseek.
 # Auto-import watches incoming/ and processes downloads through beets.
-# aotd-download fetches the daily album-of-the-day from the briefing system.
-# Used by: carbon, tin.
+# Used by: tin. (The carbon-era AOTD download/playback units were removed
+# 2026-07-18 — briefing-coupled, gone with carbon; scripts remain in scripts/
+# for the Phase-2 redo. History: `fleet-final` tag.)
 { pkgs, lib, config, username, musicLibraryDir, ... }:
 let
   # Per-host via specialArgs (flake.nix *Settings): carbon keeps the legacy
@@ -15,7 +16,7 @@ let
   libraryInHome = lib.hasPrefix "/home/" musicDir;
   scriptsDir = "${musicDir}/scripts";
 
-  # Python environment for aotd-download and music-shelf
+  # Python environment for music-shelf
   musicPython = pkgs.python3.withPackages (ps: with ps; [
     fastapi
     uvicorn
@@ -113,10 +114,6 @@ in
     owner = username;  # mp3-sync.service runs as fluoride
   };
 
-  # healthchecks.io ping URL for the AOTD dead-man's-switch. 0444: aotd-download
-  # runs as the user and needs to read it; kept out of the public repo via sops.
-  sops.secrets.hc_aotd_url.mode = "0444";
-
   # --- slskd: headless Soulseek client ---
   # Web UI at :5030, downloads to incoming/, shares library/ back to the network.
   # Credentials managed by sops-nix (see sops.templates above).
@@ -150,7 +147,6 @@ in
     pkgs.ffmpeg
     pkgs.chromaprint  # AcoustID fingerprinting (fpcalc)
     pkgs.libnotify    # notify-send, used by mp3-sync for desktop notifications
-    pkgs.mpv          # used by aotd-play.service for wake-up album playback
     musicPython
   ];
 
@@ -183,7 +179,7 @@ in
       Type = "oneshot";
       User = username;
       ExecStart = "${scriptsDir}/music-import";
-      # Mirror of the kobo-briefing → kobo-sync chain: when music-import
+      # Mirror of the udev → kobo-sync chain in modules/books: when music-import
       # finishes, if the Echo Mini SD card happens to be plugged in, push
       # any newly-imported (and freshly-starred) albums to it without
       # waiting for a replug. mp3-sync silently no-ops when not present.
@@ -216,156 +212,6 @@ in
     timerConfig = {
       OnCalendar = "*-*-* *:00,15,30,45:00";
       Persistent = true;
-    };
-  };
-
-  # --- AOTD download: fetches today's album-of-the-day ---
-  # Reads the briefing system's AOTD pointer, searches slskd, downloads, imports.
-  # Runs at 05:30 daily — must come AFTER briefing (05:00) which advances the
-  # AOTD index, and BEFORE aotd-play (06:50) which plays the downloaded album.
-  systemd.services.aotd-download = {
-    description = "Download today's album-of-the-day from Soulseek";
-    after = [ "network-online.target" "slskd.service" ];
-    wants = [ "network-online.target" ];
-    requires = [ "slskd.service" ];  # don't run if slskd isn't up
-    serviceConfig = {
-      Type = "oneshot";
-      User = username;
-      # Wait 30s for slskd to connect and log in to the Soulseek network
-      ExecStartPre = "${pkgs.coreutils}/bin/sleep 30";
-      ExecStart = "${musicPython}/bin/python ${scriptsDir}/aotd-download";
-      # ExecStartPost runs only if the download succeeded. Ping healthchecks
-      # FIRST (non-fatal `-`) so the dead-man signal isn't gated by the mp3-sync
-      # trigger; then the Echo Mini push (the `+` runs it with full privileges,
-      # ignoring User=fluoride, so `systemctl start` on a system service doesn't
-      # hit polkit's "interactive authentication required" wall).
-      ExecStartPost = [
-        "-${pkgs.writeShellScript "hc-ping-aotd" ''
-          ${pkgs.curl}/bin/curl -fsS -m 10 "$(cat ${config.sops.secrets.hc_aotd_url.path})" >/dev/null
-        ''}"
-        "+${pkgs.writeShellScript "trigger-mp3-sync-if-present" ''
-          if [ -L /dev/disk/by-uuid/36F9-1807 ]; then
-            ${pkgs.systemd}/bin/systemctl start --no-block mp3-sync.service
-          fi
-        ''}"
-        # Morning receipt: push today's AOTD outcome (written by aotd-download to
-        # ~/.briefing/aotd-last.txt) to the phone — a daily "reused / downloaded"
-        # confirmation. Runs only on success: ExecStartPost is skipped when the
-        # script exits non-zero, and those failures are already covered by the
-        # hc-ping dead-man's-switch above. The `+` prefix runs it as root so it
-        # can read the root-only ntfy topic secret shared with server/alerts.
-        # Low priority + distinct title so it reads as an FYI, not an alarm.
-        "+${pkgs.writeShellScript "aotd-receipt" ''
-          body="$(${pkgs.coreutils}/bin/cat /home/${username}/.briefing/aotd-last.txt 2>/dev/null)"
-          [ -n "$body" ] || exit 0
-          ${pkgs.curl}/bin/curl -s -m 10 \
-            -H "Title: ▶ Album of the day" \
-            -H "Priority: low" \
-            -H "Tags: musical_note" \
-            -d "$body" \
-            "$(cat ${config.sops.secrets.ntfy_alert_url.path})" || true
-        ''}"
-      ];
-      Environment = [
-        "HOME=/home/${username}"
-        "PATH=/run/current-system/sw/bin"
-      ];
-      # slskd-env: SLSKD_API_KEY for search/download.
-      # mp3-sync-env: NAVIDROME creds for the music-import star-new-albums step.
-      EnvironmentFile = [
-        config.sops.templates."slskd-env".path
-        config.sops.templates."mp3-sync-env".path
-      ];
-      # Generous timeout — slskd searches + downloads can take a while
-      TimeoutStartSec = "45min";
-    };
-  };
-  systemd.timers.aotd-download = {
-    description = "Fetch album-of-the-day at 05:30 daily";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "*-*-* 05:30:00";
-      Persistent = true;  # catch up if machine was asleep
-    };
-  };
-
-  # --- AOTD play: wake-up playback at 06:50 ---
-  # Connects the Bluetooth speaker (猫王·小王子OTR), routes audio to it, and plays
-  # today's downloaded album with a gentle volume ramp (10% → 60% over 3 min).
-  # Reads the same briefing pointer that aotd-download used, so the played album
-  # matches what was just fetched.
-  # Quietly no-ops if the album isn't in the library yet (e.g. download still
-  # running or failed) — silence is better than yesterday's audio.
-  systemd.services.aotd-play = {
-    description = "Play today's album-of-the-day on the Bluetooth speaker";
-    after = [ "aotd-download.service" ];
-    onFailure = [ "aotd-play-failure.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      User = username;
-      ExecStart = "${musicPython}/bin/python ${scriptsDir}/aotd-play";
-      Environment = [
-        "HOME=/home/${username}"
-        # bluetoothctl lives in /run/current-system/sw/bin; wpctl and mpv too
-        "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/${username}/bin"
-        # Required so wpctl/pw-cli reach the user's pipewire socket and
-        # bluetoothctl talks to the system bus correctly under the user session
-        "XDG_RUNTIME_DIR=/run/user/1000"
-        "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus"
-        # Forces UTF-8 so the Chinese-named sink parses cleanly under systemd's
-        # otherwise-C locale
-        "LANG=en_US.UTF-8"
-        "LC_ALL=en_US.UTF-8"
-      ];
-      # Generous timeout — long albums + the 3-min volume ramp + any retries
-      TimeoutStartSec = "120min";
-    };
-  };
-  systemd.timers.aotd-play = {
-    description = "Play album-of-the-day at 06:50 daily";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "*-*-* 06:50:00";
-      # Persistent=false on purpose: if the machine was off and missed the
-      # window, don't blast music at a surprise time when it boots later.
-      Persistent = false;
-    };
-  };
-
-  # Failure handler — fires (via onFailure on aotd-play above) whenever the
-  # morning playback exits non-zero: speaker unreachable, BT sink never
-  # appeared, mpv crash, etc. Pushes an immediate, actionable ntfy so a silent
-  # wake-up miss becomes a "go power-cycle the speaker" nudge on your phone,
-  # instead of being noticed days later. Mirrors the mp3-sync → mp3-sync-failure
-  # pattern above.
-  #
-  # Runs as root (no User=) so it can read the root-only ntfy_alert_url secret
-  # shared with modules/server/alerts. After alerting it clears aotd-play's
-  # failed latch via reset-failed, so the generic 15-min carbon-alert-check
-  # doesn't pile on a second, cryptic "failed units: aotd-play.service" push
-  # (and re-fire it every 6h) for a one-shot morning hiccup this handler already
-  # reported. Drop that last line if you'd rather the failure stay visible in
-  # `systemctl --failed` as a breadcrumb.
-  systemd.services.aotd-play-failure = {
-    description = "Alert (ntfy) when aotd-play fails to play the morning album";
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = pkgs.writeShellScript "aotd-play-failure" ''
-        set -u
-        reason="$(${pkgs.systemd}/bin/journalctl -u aotd-play.service -n 6 --no-pager -o cat 2>/dev/null \
-                  | ${pkgs.gnugrep}/bin/grep -F '[aotd-play]' | tail -1)"
-        [ -n "$reason" ] || reason="aotd-play.service failed — see: journalctl -u aotd-play"
-        ${pkgs.curl}/bin/curl -s -m 10 \
-          -H "Title: 🔇 Album-of-the-day didn't play" \
-          -H "Priority: high" \
-          -H "Tags: mute" \
-          -d "$reason
-
-Speaker likely off / asleep / wedged — power-cycle the 猫王 speaker, then:
-  systemctl start aotd-play   (today's album is already in the library)" \
-          "$(cat ${config.sops.secrets.ntfy_alert_url.path})" || true
-        ${pkgs.systemd}/bin/systemctl reset-failed aotd-play.service || true
-      '';
     };
   };
 

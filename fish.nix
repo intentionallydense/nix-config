@@ -7,11 +7,12 @@
 # flake's ${self}/dev-shells), and the `~/NixOS#` rebuild aliases (tin is rebuilt
 # remotely from the flake, not from a local checkout — see the deploy notes).
 #
-# mgchat is adapted: it reads a tin-specific chat-mode prompt from
-# ~/.config/claude/chat-mode-prompt.md rather than $OBSIDIAN_VAULT/claude/ (tin has
-# no vault). That file is seeded out-of-band — NOT committed, since this repo is
-# public and the prompt is personal. Seed it once from a vault machine:
-#   scp ~/Documents/Obsidian/calcium/claude/chat-mode-prompt-tin.md iodide@100.65.236.26:~/.config/claude/chat-mode-prompt.md
+# mgchat is adapted: it reads the tin-specific chat-mode prompt from the vault
+# replica (~/rubidium/claude/chat-mode-prompt-tin.md, kept current by the headless
+# Obsidian Sync service — see modules/obsidian-vault). The prompt itself is NOT
+# committed, since this repo is public and the prompt is personal.
+# (Pre-replica, the prompt was scp'd out-of-band to ~/.config/claude/ — that copy
+# and the tmpfiles rule below are vestigial.)
 { pkgs, username, ... }:
 {
   # CLI tools the aliases/functions below assume on PATH (bat, nvim, fzf).
@@ -79,25 +80,29 @@
       end
 
       # mgchat — Claude in chat-mode, in the shared 'mg' tmux session. Prompt is
-      # read from ~/.config/claude (seed it once; see this file's header). Working
-      # dir defaults to $HOME, override with TIN_WORK_DIR.
+      # the tin variant from the vault replica (synced by obsidian.service).
+      # ~/.claude/CLAUDE.md imports the same prompt so remote-control sandboxes
+      # (mobile app / claude.ai) get it too; interactive sessions already have it
+      # as their system prompt, so it is excluded here via claudeMdExcludes to
+      # avoid loading it twice. Working dir defaults to $HOME, override with
+      # TIN_WORK_DIR.
       function mgchat
-        set -l prompt_file "$HOME/.config/claude/chat-mode-prompt.md"
+        set -l prompt_file "$HOME/rubidium/claude/chat-mode-prompt-tin.md"
+        set -l no_dup_md '{"claudeMdExcludes":["'$HOME'/.claude/CLAUDE.md"]}'
         set -l work_dir (set -q TIN_WORK_DIR; and echo $TIN_WORK_DIR; or echo $HOME)
         if not test -f $prompt_file
           echo "mgchat: prompt not found at $prompt_file" >&2
-          echo "  seed it once from a vault machine:" >&2
-          echo "  scp ~/Documents/Obsidian/calcium/claude/chat-mode-prompt-tin.md iodide@100.65.236.26:~/.config/claude/chat-mode-prompt.md" >&2
+          echo "  the vault replica should provide it — is obsidian.service running / Sync healthy?" >&2
           return 1
         end
         if test -n "$TMUX"
           cd $work_dir
-          CLAUDE_CODE_NO_FLICKER=1 claude --system-prompt-file $prompt_file $argv
+          CLAUDE_CODE_NO_FLICKER=1 claude --system-prompt-file $prompt_file --settings $no_dup_md $argv
         else if tmux has-session -t mg 2>/dev/null
-          tmux new-window -t mg -c $work_dir "env CLAUDE_CODE_NO_FLICKER=1 claude --system-prompt-file $prompt_file $argv; exec fish"
+          tmux new-window -t mg -c $work_dir "env CLAUDE_CODE_NO_FLICKER=1 claude --system-prompt-file $prompt_file --settings '$no_dup_md' $argv; exec fish"
           tmux attach-session -t mg
         else
-          tmux new-session -s mg -c $work_dir "env CLAUDE_CODE_NO_FLICKER=1 claude --system-prompt-file $prompt_file $argv; exec fish"
+          tmux new-session -s mg -c $work_dir "env CLAUDE_CODE_NO_FLICKER=1 claude --system-prompt-file $prompt_file --settings '$no_dup_md' $argv; exec fish"
         end
       end
     '';

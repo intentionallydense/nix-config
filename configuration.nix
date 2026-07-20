@@ -28,8 +28,8 @@
     # NB: Immich is inlined in the base below (services.immich), NOT via the
     # shared modules/server/media module — that module bundles Jellyfin + *arr,
     # which tin deliberately does not run. Jellyfin removed 2026-07-02.
-    ./modules/music # Navidrome, slskd, music-shelf, auto-import (AOTD masked below)
-    ./modules/books # Calibre-Web (kobo-briefing masked below; kobo-sync is udev-only)
+    ./modules/music # Navidrome, slskd, music-shelf, auto-import
+    ./modules/books # Calibre-Web (kobo-sync is udev-only)
     # Invidious removed 2026-07-02 — playback was dead from the Hetzner DC IP
     # (googlevideo blocks the range); Yattee stays pointed at carbon's instance.
     # The invidious postgres DB is left on disk (not dropped).
@@ -262,31 +262,12 @@
     secrets.slskd_web_password = { };
   };
 
-  # ===========================================================================
-  # Mask the hardware/location-bound + Phase-2 units that ride in via the
-  # music/books modules. enable=false masks the unit, so the timers never fire.
-  # ===========================================================================
-  # Bedroom Bluetooth speaker — physically in Sylvia's room, unreachable here.
-  systemd.services.aotd-play.enable = lib.mkForce false;
-  systemd.timers.aotd-play.enable = lib.mkForce false;
-  systemd.services.aotd-play-failure.enable = lib.mkForce false;
-  # AOTD download is briefing-coupled (Phase 2, stays on carbon for now).
-  systemd.services.aotd-download.enable = lib.mkForce false;
-  systemd.timers.aotd-download.enable = lib.mkForce false;
-  # Kobo briefing-kepub builder is briefing-coupled (Phase 2). Calibre-Web's
-  # library + OPDS feed stay live; only the daily kepub job is masked.
-  systemd.services.kobo-briefing.enable = lib.mkForce false;
-  systemd.timers.kobo-briefing.enable = lib.mkForce false;
-  systemd.services.kobo-briefing-failure.enable = lib.mkForce false;
-  # mp3-sync (Fiio DAP) and kobo-sync (Kobo USB) are udev-triggered only — the
-  # devices never appear on a cloud box, so they self-gate. Left as-is.
-
-  # Held back at Sylvia's request: the vault/claude-coupled automation gets a
-  # clean redo later, not a straight port. (music-auto-import was unmasked
-  # 2026-06-12 when tin took over the Soulseek login — it's pure library
-  # plumbing, no vault coupling; see the $HOME migration shim above.)
-  systemd.services.carbon-alert-check.enable = lib.mkForce false; # health-check ntfy pings
-  systemd.timers.carbon-alert-check.enable = lib.mkForce false;
+  # The carbon-era mask block (aotd-*, kobo-briefing*, carbon-alert-check)
+  # was removed 2026-07-18 — the units themselves are gone from the modules
+  # now that carbon is retired. The briefing-coupled automation (AOTD download,
+  # kobo-briefing) gets its Phase-2 redo on tin rather than a straight port.
+  # mp3-sync (Fiio DAP) and kobo-sync (Kobo USB) remain udev-triggered only —
+  # the devices never appear on a cloud box, so they self-gate.
 
   system.stateVersion = "25.05";
 }
