@@ -107,6 +107,20 @@
   ];
 
   programs.fish.enable = true;
+  # Git with the canonical push identity baked in system-wide (/etc/gitconfig).
+  # tin had NO git identity before 2026-07 — commits made here either failed or
+  # got ad-hoc identities, which is how the repo history ended up with five
+  # author variants (incl. a gmail leak and the pre-2017-style noreply that
+  # doesn't attribute). This is the one true profile; user-level overrides
+  # (~/.gitconfig) still win if ever needed.
+  programs.git = {
+    enable = true; # also provides the git package (local-flake workflow:
+    #                tin builds from ~/nix-config, not github main)
+    config = {
+      user.name = "saliva";
+      user.email = "227989866+intentionallydense@users.noreply.github.com";
+    };
+  };
   # iodide's login shell is fish (set in the user block above). root deliberately
   # stays on bash so remote `nixos-rebuild`/tooling over SSH isn't parsed by fish.
   security.polkit.enable = true;
@@ -120,7 +134,9 @@
   environment.systemPackages = with pkgs; [
     claude-code
     tmux
-    git # local-flake workflow: tin now builds from ~/nix-config, not github main
+    # git comes via programs.git below (with identity config)
+    gh # GitHub CLI — SSH key covers push/pull; gh adds PR/issue/API access
+    #    (needs one-time `gh auth login` — token is per-user state, not in repo)
     # Secrets editing on-box: iodide has a user age key (see .sops.yaml,
     # ~/.config/sops/age/keys.txt) so plain `sops secrets/secrets.yaml` works.
     sops
