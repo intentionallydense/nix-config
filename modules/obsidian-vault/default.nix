@@ -24,10 +24,17 @@
 #   address") — only tailscale0 is trusted, public NIC exposes nothing. VNC
 #   password "obsidian" (client-appeasement only, see below). Manual-start
 #   only (no wantedBy), so it's normally not running.
-# - No sync-health watchdog yet: Restart=always covers crashes, but a wedged
-#   sync is invisible. Wire a real check (last-sync introspection → ntfy) when
-#   overnight-research lands, since that's the first thing that'll care.
-{ pkgs, username, ... }:
+# - Sync-health watchdog (added 2026-07-22): Restart=always covers crashes,
+#   but a wedged sync is invisible from systemd. Every 10 min a root timer
+#   checks the service is active AND the Electron process holds an established
+#   TLS connection (Obsidian Sync rides a wss:// websocket; a wedged or
+#   offline sync drops it) and pings healthchecks.io check `vault-sync`
+#   (period 10 min, grace 30 min, alerts via ntfy). Honest limits: an
+#   established socket proves connectivity, not that edits are flowing — but
+#   it catches the real failure modes seen in practice: dead process, dead
+#   Xvfb, dead network, hung Electron. Last-sync introspection can replace it
+#   when overnight-research lands and gives us something that reads the vault.
+{ pkgs, config, username, ... }:
 let
   obsidianHeadless = pkgs.writeShellScript "obsidian-headless" ''
     export LIBGL_ALWAYS_SOFTWARE=1
@@ -59,6 +66,42 @@ in
       User = username;
       Restart = "always";
       RestartSec = 15;
+    };
+  };
+
+  # --- sync-health watchdog (see header) ---
+  sops.secrets.hc_vault_sync_url = {
+    owner = "root";
+    mode = "0400";
+  };
+
+  systemd.services.vault-sync-watchdog = {
+    description = "Ping healthchecks when Obsidian Sync looks alive";
+    path = with pkgs; [ coreutils curl iproute2 gnugrep systemd ];
+    serviceConfig = {
+      Type = "oneshot";
+      # root: reads the 0400 hc URL; the socket check needs -p on another
+      # user's process anyway.
+      ExecStart = pkgs.writeShellScript "vault-sync-watchdog" ''
+        set -uo pipefail
+        systemctl is-active --quiet obsidian || exit 0
+        # Obsidian Sync holds a wss:// websocket; electron with an
+        # established :443 connection is our liveness signal.
+        if ss -tnp state established '( dport = :443 )' | grep -q electron; then
+          curl -fsS -m 10 -d "sync socket established" \
+            "$(cat ${config.sops.secrets.hc_vault_sync_url.path})" >/dev/null || true
+        fi
+      '';
+    };
+  };
+
+  systemd.timers.vault-sync-watchdog = {
+    description = "Check Obsidian Sync liveness every 10 minutes";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "10min";
+      OnUnitActiveSec = "10min";
+      Persistent = false;
     };
   };
 

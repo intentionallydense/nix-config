@@ -36,6 +36,8 @@
     ./modules/mullvad-egress # wireproxy → ch-zrh-wg-005: slskd SOCKS5
     ./modules/monitoring # Prometheus + Grafana
     ./modules/alerts # ntfy health alerts
+    ./modules/slskd-watchdog # restart slskd when its Soulseek connection wedges
+    ./modules/restic-backup # nightly restic → Backblaze B2 + pg dumps + hc ping
     ./modules/matrix # Synapse + mautrix-signal on intentiondense.net
     #   ⚠ opens 80/443 on the public NIC (the deliberate tailnet-only exception
     #   — approved 2026-07-06 for the watchOS client; see module header)

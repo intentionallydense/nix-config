@@ -90,6 +90,13 @@ in
       "d ${musicDir} 2775 ${username} media -"
     ];
 
+  # healthchecks ping URL for the music-auto-import dead-man check (root-read
+  # by a `+`-prefixed ExecStartPost below).
+  sops.secrets.hc_music_import_url = {
+    owner = "root";
+    mode = "0400";
+  };
+
   # --- sops templates: compose secrets into env files for services ---
   sops.templates."slskd-env".content = ''
     SLSKD_SLSK_USERNAME=${config.sops.placeholder.slskd_slsk_username}
@@ -186,11 +193,21 @@ in
       # `+` prefix runs this ExecStartPost with full privileges (ignoring
       # User=fluoride) — required so `systemctl start` on a system service
       # doesn't hit polkit's "interactive authentication required" wall.
-      ExecStartPost = "+${pkgs.writeShellScript "trigger-mp3-sync-if-present" ''
-        if [ -L /dev/disk/by-uuid/36F9-1807 ]; then
-          ${pkgs.systemd}/bin/systemctl start --no-block mp3-sync.service
-        fi
-      ''}";
+      ExecStartPost = [
+        "+${pkgs.writeShellScript "trigger-mp3-sync-if-present" ''
+          if [ -L /dev/disk/by-uuid/36F9-1807 ]; then
+            ${pkgs.systemd}/bin/systemctl start --no-block mp3-sync.service
+          fi
+        ''}"
+        # healthchecks dead-man ping — only fires on a successful run (oneshot
+        # ExecStartPost semantics), so grace expiry catches both a failing
+        # importer and a timer that silently stopped firing (how AOTD died).
+        # `+` prefix: root, to read the 0400 ping-URL secret.
+        "+${pkgs.writeShellScript "music-import-hc-ping" ''
+          ${pkgs.curl}/bin/curl -fsS -m 10 \
+            "$(cat ${config.sops.secrets.hc_music_import_url.path})" >/dev/null || true
+        ''}"
+      ];
       Environment = [
         "HOME=/home/${username}"
         "PATH=/run/current-system/sw/bin"
